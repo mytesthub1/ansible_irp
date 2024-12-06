@@ -1,0 +1,57 @@
+---
+all:
+  hosts:
+    apt.irp.servers.im:
+      ansible_host: 142.91.9.153
+      ipv4_additional_addresses: []
+      common_monitoring_dell_hw: false
+      common_monitoring_interface_public_redundant: false
+      common_monitoring_interface_private_redundant: false
+    lb1.irp.servers.im:
+      ansible_host: 10.215.2.249
+      ipv4_additional_addresses:
+        - 23.111.24.145
+      common_monitoring_dell_hw: false
+      common_monitoring_interface_public_redundant: false
+      common_monitoring_interface_private_redundant: false
+    ntp.irp.servers.im:
+      ansible_host: 10.215.2.184
+      ipv4_additional_addresses:
+        - 142.91.9.143
+      common_monitoring_dell_hw: false
+      common_monitoring_interface_public_redundant: false
+      common_monitoring_interface_private_redundant: false
+      generic_chrony_bind_address: 0.0.0.0
+      generic_chrony_allow:
+        - 0.0.0.0/0
+      generic_ntp_servers:
+        - fqdn: time.servers.com
+          maxsources: 2
+
+
+  vars:
+    test_var_for_override: defined_in_inventory_file
+    generic_apt_repos: []
+
+production:
+  hosts:
+    apt.irp.servers.im:
+    lb1.irp.servers.im:
+    ntp.irp.servers.im:
+
+aptly_server:
+  children:
+    clickhouse_mirror:
+
+k8s_lb:
+  hosts:
+    lb1.irp.servers.im:
+
+
+clickhouse_mirror:
+  hosts:
+    apt.irp.servers.im:
+
+ntp:
+  hosts:
+    ntp.irp.servers.im:

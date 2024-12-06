@@ -1,0 +1,8 @@
+---
+- ansible.builtin.import_playbook: _asserts.yaml
+  tags:
+    - always
+
+- ansible.builtin.import_playbook: databases.yaml
+- ansible.builtin.import_playbook: k8s_lb.yaml
+- ansible.builtin.import_playbook: k8s_deploy.yaml

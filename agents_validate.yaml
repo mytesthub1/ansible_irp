@@ -1,0 +1,9 @@
+---
+- hosts: stations
+  gather_facts: true
+  tasks:
+    - name: Vakidate agents
+      ansible.builtin.import_role:
+        name: agent_nginx_proxy
+        tasks_from: validate.yaml
+      when: nginx_proxy is defined

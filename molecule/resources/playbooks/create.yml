@@ -1,0 +1,242 @@
+---
+- name: Check resources
+  import_playbook: resources_check.yml
+
+- name: Create keypair
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files: _vars.yml
+  tasks:
+    - name: Check if there is a public key in ssh agent
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          ssh-add -L | grep -E '^ssh-rsa\s|^ssh-ed25519\s'  # filter certificates
+        executable: /bin/bash
+      register: keyring_info
+      changed_when: false
+
+    - name: Process public key
+      ansible.builtin.set_fact:
+        public_key: "{{ keyring_info.stdout_lines[0] }}"
+
+    - name: Create keypair
+      openstack.cloud.keypair:
+        name: "keypair-{{ job_slug }}"
+        public_key: "{{ public_key }}"
+      vars:
+        molecule_scenario_name: "{{ molecule_yml.scenario.name }}"
+        job_slug: "{{ molecule_yml.scenario.name }}-{{ lookup('env', 'CI_JOB_ID') | default(lookup('env', 'USER'), true) }}"
+      register: keypair
+
+
+- name: Get network info
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Get list of available networks
+      delegate_to: localhost
+      run_once: true
+      openstack.cloud.networks_info:
+      register: networks
+
+- name: Create ports and servers
+  hosts: all  # molecule?
+  gather_facts: false
+  vars_files: _vars.yml
+  vars:
+    host_query: "[?name=='{{ inventory_hostname }}']"
+    platform_info: "{{ (molecule_yml.platforms | community.general.json_query(host_query))[0] }}"
+
+    external_networks: "{{ networks.networks | selectattr('is_shared') | list }}"
+    internal_network_name: "{{ platform_info.private_network_name | d('global_private') }}"
+    internal_networks: "{{ networks.networks | selectattr('name', 'equalto', internal_network_name) | list }}"
+    local_network_name: "{{ platform_info.local_network_name | d('local_private') }}"
+    local_networks: "{{ networks.networks | selectattr('name', 'equalto', local_network_name) | list }}"
+
+    security_groups: "{{ platform_info.security_groups | d(omit, true) }}"
+    security_group_name: "{{ hostvars['localhost'].security_group_name }}"
+
+    ssh_user: "{{ platform_info.ssh_user | d('cloud-user') }}"
+
+    external_network_needed: "{{ platform_info.public_network | d(false) }}"
+    internal_network_needed: "{{ platform_info.private_network | d(true) }}"
+    local_network_needed: "{{ platform_info.local_network | d(false) }}"
+
+    molecule_scenario_name: "{{ molecule_yml.scenario.name }}"
+
+    job_slug: "{{ molecule_yml.scenario.name }}-{{ lookup('env', 'CI_JOB_ID') | default(lookup('env', 'USER'), true) }}"
+    keypair_name: "keypair-{{ job_slug }}"
+
+    ssh_port: 22
+
+    port_name_external: "{{ inventory_hostname }}_{{ job_slug }}_ext"
+    port_name_internal: "{{ inventory_hostname }}_{{ job_slug }}_int"
+    port_name_local: "{{ inventory_hostname }}_{{ job_slug }}_loc"
+
+    userdata_default_debian: |
+      #cloud-config
+      apt:
+        preserve_sources_list: false
+        primary:
+          - arches: [default]
+            uri: http://mirror.servers.com/debian
+        security:
+          - arches: [default]
+            uri: http://mirror.servers.com/debian-security
+    userdata_default_ubuntu: |
+      #cloud-config
+      apt:
+        preserve_sources_list: false
+        primary:
+          - arches: [default]
+            uri: http://mirror.servers.com/ubuntu
+        security:
+          - arches: [default]
+            uri: http://mirror.servers.com/ubuntu
+    userdata_default: "{{ userdata_default_debian if ('debian' in platform_info.image | lower) else userdata_default_ubuntu }}"
+
+  tasks:
+    #
+    # Create ports
+    - name: Create external port
+      delegate_to: localhost
+      openstack.cloud.port:
+        name: "{{ port_name_external }}"
+        network: "{{ item.id }}"
+        security_groups: "{{ security_group_name | default(omit) }}"
+      register: ext_port_create
+      when:
+        - ext_port_create.failed | d(true)
+        - external_network_needed
+      loop: "{{ external_networks }}"
+      loop_control:
+        label: "{{ item.name }}"
+      ignore_errors: true  # we can afford few errors, one success is enough. If there is no port created, os_server will fail anyway.
+
+    - name: Create internal port
+      delegate_to: localhost
+      openstack.cloud.port:
+        name: "{{ port_name_internal }}"
+        network: "{{ item.id }}"
+        security_groups: "{{ security_group_name | default(omit) }}"
+      register: int_port_create
+      when:
+        - int_port_create.failed | d(true)
+        - internal_network_needed
+      loop: "{{ internal_networks }}"
+      loop_control:
+        label: "{{ item.name }}"
+      ignore_errors: true
+
+    - name: Create local port
+      delegate_to: localhost
+      openstack.cloud.port:
+        name: '{{ port_name_local }}'
+        network: "{{ item.id }}"
+        security_groups: "{{ security_groups }}"
+      register: local_port_create
+      when:
+        - local_port_create.failed|d(true)
+        - local_network_needed
+      loop: "{{ local_networks }}"
+      loop_control:
+        label: "{{ item.name }}"
+      ignore_errors: true
+
+    #
+    # Process ports info
+    - name: Process external port info
+      ansible.builtin.set_fact:
+        nics: "{{ nics | d([]) + [external_port] }}"
+      vars:
+        external_port:
+          port-name: "{{ port_name_external }}"
+      when: external_network_needed
+
+    - name: Process internal port info
+      ansible.builtin.set_fact:
+        nics: "{{ nics | d([]) + [internal_port] }}"
+      vars:
+        internal_port:
+          port-name: "{{ port_name_internal }}"
+      when: internal_network_needed
+
+    - name: Process local port info
+      ansible.builtin.set_fact:
+        nics: '{{ nics | d([]) + [local_port] }}'
+      vars:
+        local_port:
+          port-name: "{{ port_name_local }}"
+      when: local_network_needed
+
+    #
+    # Create instance
+    - name: Create molecule instance
+      delegate_to: localhost
+      openstack.cloud.server:
+        name: "{{ inventory_hostname }}-{{ job_slug }}"
+        image: "{{ platform_info.image }}"
+        flavor: "{{ platform_info.flavor }}"
+        key_name: "{{ keypair_name }}"
+        nics: "{{ nics }}"
+        security_groups: "{{ security_groups }}"
+        auto_ip: false
+        userdata: "{{ platform_info.userdata | d(userdata_default) }}"
+        meta:
+          inventory_hostname: "{{ inventory_hostname }}"
+          ssh_user: "{{ ssh_user }}"
+          ci_project_name: "{{ lookup('env', 'CI_PROJECT_NAME') }}"
+          ci_job_id: "{{ lookup('env', 'CI_JOB_ID') }}"
+          ci_commit_sha: "{{ lookup('env', 'CI_COMMIT_SHA') }}"
+          job_slug: "{{ job_slug }}"
+          molecule_scenario: "{{ molecule_yml.scenario.name }}"
+      register: server
+
+    #
+    # Process created instance
+    - name: Save settings
+      ansible.builtin.set_fact:
+        ssh_user: "{{ ssh_user }}"
+        ssh_port: "{{ ssh_port }}"
+
+    - name: Search for private IP
+      ansible.builtin.set_fact:
+        access_ip: "{{ server.server.addresses[internal_network_name][0].addr }}"
+      when: internal_network_needed
+
+    - name: Search for first available IP
+      ansible.builtin.set_fact:
+        access_ip: "{{ (server.server.addresses | dict2items)[0].value[0].addr }}"
+      when: not internal_network_needed
+
+    - name: Report
+      ansible.builtin.debug:
+        msg: "Access IP is {{ access_ip }}"
+
+    - name: Wait for SSH
+      delegate_to: localhost
+      ansible.builtin.wait_for:
+        port: "{{ ssh_port }}"
+        host: "{{ access_ip }}"
+        search_regex: SSH
+        delay: 10
+
+- name: Populate instance config dict
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Save instance config
+      ansible.builtin.copy:
+        content: |
+          ---
+          {% for host in groups.all %}
+          - instance: "{{ host }}"
+            instance_id: "{{ hostvars[host].server.server.id }}"
+            address: "{{ hostvars[host].access_ip }}"
+            port: {{ hostvars[host].ssh_port }}
+            user: "{{ hostvars[host].ssh_user }}"
+          {% endfor %}
+        dest: "{{ molecule_instance_config }}"
+        mode: 0644

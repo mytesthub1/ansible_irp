@@ -1,0 +1,26 @@
+---
+- name: Setup postgres cluster in k8s
+  ansible.builtin.import_playbook: k8s_postgres.yaml
+  when: postgres_k8s | d(false)
+
+- name: Create redis databases in k8s
+  hosts: all
+  run_once: true
+  gather_facts: false
+  roles:
+    - role: k8s_namespace
+    - role: k8s_redis
+      tags: redis
+
+- name: Install clickhouse
+  tags: [clickhouse]
+  hosts: clickhouse
+  gather_facts: false
+  roles:
+    - role: clickhouse
+      clickhouse_dbs: '{{ clickhouse_central_dbs | json_query("[?host==`" + inventory_hostname + "`]") }}'
+    - role: irp_firewall
+      irp_allow_hosts: '{{ groups.stations }}'
+
+- name: Setup clickhouse-backup
+  ansible.builtin.import_playbook: _clickhouse_backup.yaml

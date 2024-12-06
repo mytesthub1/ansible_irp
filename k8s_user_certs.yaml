@@ -1,0 +1,99 @@
+---
+- name: Generate user certificates
+  hosts: localhost
+  gather_facts: false
+  strategy: linear
+  tasks:
+
+    - name: Create certs dir
+      ansible.builtin.file:
+        path: k8s-users-certs
+        state: directory
+        mode: 0755
+
+    - name: Generate user private key
+      ansible.builtin.command: openssl genrsa -out k8s-users-certs/{{ item }}.key 4096
+      args:
+        creates: "k8s-users-certs/{{ item }}.key"
+      loop: "{{ k8s_users + k8s_admin_users }}"
+
+    - name: Create openssl req configs
+      ansible.builtin.copy:
+        content: |
+          [ req ]
+          default_bits = 2048
+          prompt = no
+          default_md = sha256
+          distinguished_name = dn
+          [ dn ]
+          CN = {{ item }}
+          O = irp-devs
+          [ v3_ext ]
+          authorityKeyIdentifier=keyid,issuer:always
+          basicConstraints=CA:FALSE
+          keyUsage=keyEncipherment,dataEncipherment
+          extendedKeyUsage=serverAuth,clientAuth
+        dest: k8s-users-certs/openssl_{{ item }}.conf
+        mode: 0644
+      loop: "{{ k8s_users }}"
+
+    - name: Create openssl req configs
+      ansible.builtin.copy:
+        content: |
+          [ req ]
+          default_bits = 2048
+          prompt = no
+          default_md = sha256
+          distinguished_name = dn
+          [ dn ]
+          CN = {{ item }}
+          O = irp-admins
+          [ v3_ext ]
+          authorityKeyIdentifier=keyid,issuer:always
+          basicConstraints=CA:FALSE
+          keyUsage=keyEncipherment,dataEncipherment
+          extendedKeyUsage=serverAuth,clientAuth
+        dest: k8s-users-certs/openssl_{{ item }}.conf
+        mode: 0644
+      loop: "{{ k8s_admin_users }}"
+
+    - name: Generate csr
+      ansible.builtin.command: openssl req -config k8s-users-certs/openssl_{{ item }}.conf -new -key k8s-users-certs/{{ item }}.key -out k8s-users-certs/{{ item }}.csr
+      args:
+        creates: "k8s-users-certs/{{ item }}.csr"
+      loop: "{{ k8s_users + k8s_admin_users }}"
+
+    - name: Create signature requests
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: certificates.k8s.io/v1
+          kind: CertificateSigningRequest
+          metadata:
+            name: "{{ item }}"
+          spec:
+            request: "{{ lookup('file', 'k8s-users-certs/' + item + '.csr') | b64encode }}"
+            signerName: kubernetes.io/kube-apiserver-client
+            usages:
+              - client auth
+      loop: "{{ k8s_users + k8s_admin_users }}"
+      notify: Approve CSR
+
+    - name: Flush handlers
+      ansible.builtin.meta: flush_handlers
+
+    - name: Get certificates
+      ansible.builtin.shell: |
+        set -eo pipefail
+        kubectl get csr {{ item }} -o jsonpath='{.status.certificate}'| base64 -d > k8s-users-certs/{{ item }}.crt
+      args:
+        creates: k8s-users-certs/{{ item }}.crt
+        executable: /bin/bash
+      loop: "{{ k8s_users + k8s_admin_users }}"
+
+
+  handlers:
+    - name: Approve CSR
+      ansible.builtin.command: kubectl certificate approve {{ item }}
+      loop: "{{ k8s_users + k8s_admin_users }}"
+      changed_when: true

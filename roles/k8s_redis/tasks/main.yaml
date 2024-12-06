@@ -1,0 +1,127 @@
+---
+- name: Add redis-operator helm repos
+  delegate_to: localhost
+  kubernetes.core.helm_repository:
+    name: redis-operator
+    repo_url: https://spotahome.github.io/redis-operator
+
+- name: Deploy redis-operator
+  delegate_to: localhost
+  kubernetes.core.helm:
+    context: "{{ kubernetes_context }}"
+    name: redis-operator
+    chart_ref: redis-operator/redis-operator
+    chart_version: "{{ redis_chart_version }}"
+    release_namespace: redis-operator
+    create_namespace: true
+    update_repo_cache: true
+    wait: true
+    values:
+      monitoring:
+        enabled: true
+        serviceMonitor: true
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 1000m
+          memory: 1024Mi
+  register: result
+  until: result is success
+  retries: 10
+  delay: 10
+
+- name: Create redis password secret
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    namespace: "{{ kubernetes_namespace }}"
+    definition:
+      apiVersion: v1
+      kind: Secret
+      type: Opaque
+      metadata:
+        name: redis-auth
+      data:
+        password: "{{ redis_password | b64encode }}"
+
+- name: Create Redis network policy
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    namespace: "{{ kubernetes_namespace }}"
+    definition:
+      apiVersion: networking.k8s.io/v1
+      kind: NetworkPolicy
+      metadata:
+        name: redis
+      spec:
+        podSelector:
+          matchLabels:
+            app.kubernetes.io/component: sentinel
+        policyTypes:
+          - Ingress
+        ingress:
+          - from:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: "{{ kubernetes_namespace }}"
+          - from:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: redis-operator
+
+- name: Deploy Redis
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    namespace: "{{ kubernetes_namespace }}"
+    definition:
+      apiVersion: databases.spotahome.com/v1
+      kind: RedisFailover
+      metadata:
+        annotations:
+        name: redis-quality-solver
+      spec:
+        redis:
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchLabels:
+                      app.kubernetes.io/component: redis
+                      app.kubernetes.io/managed-by: redis-operator
+                      app.kubernetes.io/name: redisfailover
+                      app.kubernetes.io/part-of: redis-failover
+                      redisfailovers.databases.spotahome.com/name: redis
+                  topologyKey: kubernetes.io/hostname
+          exporter:
+            args:
+              - --web.telemetry-path
+              - /metrics
+            enabled: true
+          replicas: 3
+          resources:
+            requests:
+              memory: 4Gi
+          storage:
+            persistentVolumeClaim:
+              metadata:
+                name: redis-persistent-data
+              spec:
+                storageClassName: openebs-hostpath
+                accessModes:
+                  - ReadWriteOnce
+                resources:
+                  requests:
+                    storage: 10Gi
+        sentinel:
+          replicas: 3
+          exporter:
+            enabled: true
+        auth:
+          secretPath: redis-auth

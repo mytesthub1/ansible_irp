@@ -1,0 +1,14 @@
+[Unit]
+Description=Aptly API
+After=network.target
+
+[Service]
+User={{ aptly_user }}
+WorkingDirectory={{ aptly_root_dir }}
+ExecStart=/usr/bin/aptly api serve \
+            -no-lock \
+            -config=/etc/aptly.conf \
+            -listen=127.0.0.1:10101
+
+[Install]
+WantedBy=multi-user.target

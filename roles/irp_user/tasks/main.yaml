@@ -1,0 +1,14 @@
+---
+- name: Create group for IRP
+  become: true
+  ansible.builtin.group:
+    system: true
+    name: '{{ irp_group }}'
+    state: present
+- name: Create system user for IRP
+  become: true
+  ansible.builtin.user:
+    name: '{{ irp_user }}'
+    system: true
+    group: '{{ irp_group }}'
+    password: '!'

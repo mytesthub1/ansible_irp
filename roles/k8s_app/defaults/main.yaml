@@ -1,0 +1,8 @@
+---
+irp_image_tag: dev
+irp_image_pull_policy: Always
+irp_reborn_image_tag: latest
+irp_reborn_image_pull_policy: Always
+
+irp_taco_helm_repo_url: https://git.servers.im/api/v4/projects/533/packages/helm/irp-taco
+irp_reborn_helm_repo_url: https://git.servers.im/api/v4/projects/510/packages/helm/irp-reborn

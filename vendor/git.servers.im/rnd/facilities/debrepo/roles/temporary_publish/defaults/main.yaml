@@ -1,0 +1,4 @@
+---
+debrepo_aptly_user: aptly
+debrepo_mirror_architectures: ['amd64']
+debrepo_mirror_components: ['main']

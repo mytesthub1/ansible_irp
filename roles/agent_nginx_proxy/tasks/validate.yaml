@@ -1,0 +1,14 @@
+---
+- name: Agent-nginx-proxy | validate | Check if /heartbeat is available on every site
+  become: true
+  ansible.builtin.uri:
+    url: http://{{ item.external_ip }}:{{ item.external_port }}/heartbeat
+    method: GET
+  changed_when: false
+  loop: '{{ nginx_proxy }}'
+  loop_control:
+    label: '{{ item.name }}'
+  register: resp
+  until: resp is succeeded
+  retries: 100
+  delay: 1

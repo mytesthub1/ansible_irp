@@ -1,0 +1,21 @@
+[Unit]
+Description=ClickHouse Server for IRP {{ item.name }}
+ReloadPropagatedFrom=irp-clickhouse.target
+PartOf=irp-clickhouse.target
+
+[Service]
+Type=simple
+User=clickhouse
+Group=clickhouse
+Restart=always
+RestartSec=30
+RuntimeDirectory=clickhouse-server-{{ item.name }}
+ExecStartPre=+mkdir -p /run/clickhouse-server
+ExecStartPre=+chown clickhouse:clickhouse /run/clickhouse-server
+ExecStart=/usr/bin/clickhouse-server --config=/etc/clickhouse-server/{{ item.name }}/config.xml --pid-file=/run/clickhouse-server/clickhouse-server-{{ item.name }}.pid
+LimitCORE=infinity
+LimitNOFILE=500000
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_IPC_LOCK CAP_SYS_NICE
+
+[Install]
+WantedBy=irp-clickhouse.target

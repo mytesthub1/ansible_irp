@@ -1,0 +1,24 @@
+---
+- name: Prepare host | Install aptly
+  import_playbook: ../../install.yaml
+
+- name: Prepare host | make deb package 1.0
+  import_playbook: ../resources/playbooks/make_deb_package.yml
+  vars:
+    package_version: 1.0
+
+- name: aptly | install aptly
+  hosts: aptly_source_repo
+  tags: [install]
+  gather_facts: false
+  become: true
+  roles:
+    - role: aptly_install
+    - role: gpg
+    - role: extract_aptly_public_key
+      gpg_public_report_path: 'gpg_public_key.yaml'
+    - role: nginx
+      nginx_sites:
+        - site: '{{ inventory_hostname }}'
+          ansible.builtin.template: nginx_aptly.j2
+    - role: create_repo

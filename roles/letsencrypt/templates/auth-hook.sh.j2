@@ -1,0 +1,44 @@
+#!/bin/bash
+set -e
+# Certboot hook script to create dns TXT record for Let's Encrypt dns-01 check
+
+if [ -z "$CERTBOT_DOMAIN" ]; then
+    echo "Empty $CERTBOT_DOMAIN provided"
+    exit 1
+fi
+
+if [ -z "$CERTBOT_VALIDATION" ]; then
+    echo "Empty $CERTBOT_VALIDATION provided"
+    exit 1
+fi
+
+echo "Domain: $CERTBOT_DOMAIN"
+echo "Validation: $CERTBOT_VALIDATION"
+
+nsupdate <<EOF
+server {{ ddns_server }}
+key {{ ddns_key }}
+update delete _acme-challenge.${CERTBOT_DOMAIN}
+update add _acme-challenge.${CERTBOT_DOMAIN} 60 TXT ${CERTBOT_VALIDATION}
+send
+EOF
+
+# Waiting for DNS record update on all webzilla ns
+
+DNS_SERVERS=`dig +short {{ irp_dns_zone }} NS`
+
+for DNS_SERVER in $DNS_SERVERS; do
+    for i in {1..60}; do # try to get correct TXT record in 10min 60*10sec
+        TXT=$(dig +short "_acme-challenge.$CERTBOT_DOMAIN" TXT "@$DNS_SERVER" | tr -d '"')
+        echo "$DNS_SERVER: $TXT"
+        if [ "$TXT" == "$CERTBOT_VALIDATION" ]; then
+            break
+        fi
+        sleep 10
+    done
+    if [ "$i" == 60 ]; then # exit if we haven't received correct TXT record in 5min from one NS server
+        exit 1
+    fi
+done
+
+sleep 60

@@ -1,0 +1,17 @@
+[Unit]
+Description={{ item.name }}
+ReloadPropagatedFrom=irp-snmp-collector.target
+PartOf=irp-snmp-collector.target
+[Service]
+Type=simple
+ExecStart=/usr/bin/java \
+            -Dserver.port={{ item.listen_port }} \
+            -Dserver.address={{ item.listen_ip }} \
+            -Xms{{ item.jvm_mem_min }} -Xmx{{ item.jvm_mem_max }} \
+            -DLOG_PATH=/var/log/irp/{{ item.name }} \
+            -Dlogging.config=/etc/irp/{{ item.name }}/logback.xml \
+            -Xlog:gc:file=/var/log/irp/{{ item.name }}/gc.log:time,level,tags:filecount=5,filesize=100m \
+            -jar /usr/lib/irp/irp-snmp-collector.jar
+LogNamespace=irp
+[Install]
+WantedBy=irp-snmp-collector.target

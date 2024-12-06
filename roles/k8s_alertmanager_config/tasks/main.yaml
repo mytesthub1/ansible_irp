@@ -1,0 +1,51 @@
+---
+- name: Create alertmanager slack secret
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    namespace: "{{ kubernetes_namespace }}"
+    definition:
+      apiVersion: v1
+      kind: Secret
+      type: Opaque
+      metadata:
+        name: slack-webhook-url
+      data:
+        slack-webhook-url: "{{ slack_webhook_url | b64encode }}"
+
+- name: Configure alertmanager
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    namespace: "{{ kubernetes_namespace }}"
+    definition:
+      apiVersion: monitoring.coreos.com/v1alpha1
+      kind: AlertmanagerConfig
+      metadata:
+        name: irp-alermanager-config
+      spec:
+        route:
+          groupBy:
+            - alertname
+            - instance
+            - job
+          groupWait: 10s
+          groupInterval: 10s
+          repeatInterval: 12h
+          receiver: Slack
+        receivers:
+          - name: Slack
+            slackConfigs:
+              - apiURL:
+                  key: slack-webhook-url
+                  name: slack-webhook-url
+                # channel: '#irp-test-notifications'
+                sendResolved: true
+                title: !unsafe '{{ template "slack.sc.title" . }}'
+                title_link:
+                color: !unsafe '{{ template "slack.sc.color" . }}'
+                text: !unsafe '{{ template "slack.sc.text" . }}'
+                fallback: !unsafe '{{ template "slack.sc.fallback" . }}'
+                # username: Alertmanager

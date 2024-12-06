@@ -1,0 +1,10 @@
+---
+- name: Netplan_apply
+  become: true
+  ansible.builtin.command: netplan apply
+  changed_when: true
+
+- name: Daemon_reload
+  become: true
+  ansible.builtin.systemd:
+    daemon_reload: true

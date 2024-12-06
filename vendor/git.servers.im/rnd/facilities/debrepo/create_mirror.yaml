@@ -1,0 +1,7 @@
+---
+- name: Create repo mirror
+  hosts: aptly_server
+  tags: [mirror_create]
+  gather_facts: false
+  roles:
+    - role: create_mirror

@@ -1,0 +1,15 @@
+---
+all:
+  vars:
+    test_var_for_override: defined_in_inventory_file
+
+k8s_staging:
+  hosts:
+    click.staging-k8s.irp.servers.im:
+      ansible_host: 10.82.150.165
+      ipv4_additional_addresses:
+        - 188.42.62.7
+
+clickhouse:
+  hosts:
+    click.staging-k8s.irp.servers.im:

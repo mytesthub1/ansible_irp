@@ -1,0 +1,7 @@
+---
+- name: Extract aptly public gpg
+  hosts: aptly_server
+  gather_facts: false
+  roles:
+    - role: extract_aptly_public_key
+      gpg_user: '{{ debrepo_aptly_user }}'

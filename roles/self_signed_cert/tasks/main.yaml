@@ -1,0 +1,20 @@
+---
+- name: Copy self-signed certificate
+  ansible.builtin.copy:
+    src: central-nginx-selfsigned.crt
+    dest: /etc/ssl/certs
+    mode: 0644
+    owner: www-data
+
+- name: Copy self-signed certificate key
+  ansible.builtin.copy:
+    src: central-nginx-selfsigned.key
+    dest: /etc/ssl/private
+    mode: 0600
+    owner: www-data
+
+- name: Generate dhparam.pem file
+  become: true
+  ansible.builtin.command:
+    cmd: openssl dhparam -out /etc/ssl/dhparam.pem 2048
+    creates: /etc/ssl/dhparam.pem

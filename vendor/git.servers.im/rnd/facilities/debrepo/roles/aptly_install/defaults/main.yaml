@@ -1,0 +1,3 @@
+---
+aptly_user: aptly
+aptly_root_dir: /var/www/aptly

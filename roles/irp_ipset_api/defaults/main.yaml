@@ -1,0 +1,3 @@
+---
+irp_install_state: present  # set to 'latest' by update script
+apt_cache_valid_time: 3600

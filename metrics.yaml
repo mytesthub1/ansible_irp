@@ -1,0 +1,18 @@
+---
+- import_playbook: serverscom.common_monitoring_ng.setup
+
+- name: Configure firewall
+  hosts: metrics
+  gather_facts: false
+  vars:
+    irp_allow_hosts: '{{ groups.all }}'
+  roles:
+    - irp_firewall
+  tags:
+    - firewall
+
+- name: Configure roi_exporter alerts
+  hosts: metrics
+  gather_facts: false
+  roles:
+    - roi_exporter_alerts

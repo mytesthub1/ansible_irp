@@ -1,0 +1,14 @@
+---
+generic_ntp_servers:
+  - fqdn: 142.91.9.143
+    maxsources: 1
+common_monitoring_amwhh_url: http://c33227.nl01.servers.im/artifacts.693bc42595ca717543dbc7e76e060345f6658f874385d5ab13364698cd1d223f/_static/bin/amwhh/amwhh_linux_amd64.v0.0.3
+common_monitoring_perccli_exporter_image: serverscom/perccli-exporter:0.2.1
+common_monitoring_prometheus_image: prom/prometheus:v2.51.1
+common_monitoring_alertmanager_image: prom/alertmanager:v0.27.0
+common_monitoring_cert_exporter_image: joeelliott/cert-exporter:v2.11.1
+common_monitoring_dell_exporter_image: ghcr.io/galexrt/dellhw_exporter:v1.13.10
+common_monitoring_dmesg_exporter_image: cirocosta/dmesg_exporter:0.0.1
+common_monitoring_grafana_image: grafana/grafana:10.4.1
+common_monitoring_nginx_image: library/nginx:1.24.0-alpine
+common_monitoring_node_exporter_image: prom/node-exporter:v1.7.0

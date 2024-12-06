@@ -1,0 +1,10 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clickhouse-init-script
+data:
+  init.sql: |
+{% for db in clickhouse_central_dbs %}
+        CREATE DATABASE IF NOT EXISTS {{ db.name }};
+{% endfor %}

@@ -1,0 +1,16 @@
+---
+- name: Restart exa_pull
+  become: true
+  ansible.builtin.systemd:
+    name: irp-exa-pull.target
+    state: restarted
+    enabled: true
+    daemon_reload: true
+
+- name: Reload exa_pull
+  become: true
+  ansible.builtin.systemd:
+    name: irp-exa-pull.target
+    state: reloaded
+    enabled: true
+    daemon_reload: true

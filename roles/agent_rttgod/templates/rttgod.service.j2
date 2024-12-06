@@ -1,0 +1,15 @@
+[Unit]
+Description={{ item.name }}
+ReloadPropagatedFrom=rttgod.target
+PartOf=rttgod.target
+[Service]
+Type=simple
+ExecStart=/usr/bin/rttgod --source-ip {{ item.ping_source_ip }} --listen-threads={{ item.listen_threads }} --sampling-interval {{ item.sampling_interval  }} --api-listen={{ item.listen_ip }}:{{ item.listen_port }} --batch-size={{ item.batch_size }}  --ping-count={{ item.ping_count }} --reservation-seconds={{ item.reservation_seconds }}
+CapabilityBoundingSet=CAP_NET_RAW
+ProtectSystem=true
+ProtectHome=true
+RestartSec=5s
+Restart=on-failure
+LogNamespace=irp
+[Install]
+WantedBy=rttgod.target

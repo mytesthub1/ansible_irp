@@ -1,0 +1,42 @@
+---
+- name: aptly | install aptly
+  hosts: aptly_source_repo
+  tags: [install]
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Packages dir structure
+      ansible.builtin.file:
+        path: /srv/{{ item }}
+        state: directory
+      with_items:
+        - megapackage
+        - megapackage/DEBIAN
+        - megapackage/usr
+        - megapackage/usr/bin
+
+    - name: Package control
+      ansible.builtin.copy:
+        dest: /srv/megapackage/DEBIAN/control
+        content: |
+          Package: megapackage
+          Version: {{ package_version }}
+          Section: custom
+          Priority: optional
+          Architecture: all
+          Essential: no
+          Installed-Size: 1024
+          Maintainer: {{ inventory_hostname }}
+          Description: Print linuxconfig.org on the screen
+
+    - name: File for packaging
+      ansible.builtin.copy:
+        dest: /srv/megapackage/usr/bin/megafile
+        content: |
+          # /bin/bash
+          echo {{ inventory_hostname }}
+
+    - name: Build package
+      ansible.builtin.command: "dpkg-deb --deb-format=2.0 --build megapackage megapackage-{{ package_version }}_all.deb"
+      args:
+        chdir: /srv/

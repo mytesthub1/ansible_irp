@@ -1,0 +1,7 @@
+---
+- name: Create local repo
+  hosts: aptly_server
+  tags: [repo]
+  gather_facts: false
+  roles:
+    - role: create_repo

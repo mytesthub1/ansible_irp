@@ -1,0 +1,44 @@
+---
+- name: Check openstack resources
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    existing_instances: []
+  tasks:
+    - name: Assert that USER environment variable is defined
+      ansible.builtin.assert:
+        that:
+          - "lookup('env','USER')"
+        msg: 'Environment variable USER is not defined'
+
+    - name: Get instances status
+      os_server_info:
+        server: "*"
+        filters:
+          metadata:
+            molecule_scenario: "{{ molecule_yml.scenario.name }}"
+            ci_project_name: "{{ lookup('env','CI_PROJECT_NAME') }}"
+      register: os_instances
+      when: lookup("env","CI_CONCURRENT_PIPELINES") == "false"
+
+    - name: Output existing instances
+      ansible.builtin.debug:
+        msg: "{{ message.split('\n') }}"
+      when:
+        - os_instances.openstack_servers | d([]) | length > 0
+        - lookup("env","CI_CONCURRENT_PIPELINES") == "false"
+      vars:
+        message: |
+          Instance(s) already exists:
+          {% for instance in os_instances.openstack_servers %}
+          {{ instance.name }} - {{ instance.id }}
+          {% endfor %}
+
+    - name: Check resources and flags
+      ansible.builtin.fail:
+        msg: "Instances of this scenario exist. Please check and delete instances manually or wait until other
+        pipelines of this project finished"
+      when:
+        - os_instances.openstack_servers | d([]) | length > 0
+        - lookup("env","CI_CONCURRENT_PIPELINES") == "false"

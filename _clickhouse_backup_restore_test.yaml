@@ -1,0 +1,17 @@
+---
+- name: Restore clickhouse backup
+  hosts: clickhouse_backup
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Exec clickhouse-restore-test.sh script
+      ansible.builtin.shell: |
+        set -e
+        /usr/local/bin/clickhouse-restore-test.sh {{ item }} {{ clickhouse_backup_config[item].clickhouse_backup_check_table }}
+      loop: '{{ clickhouse_backup_config.keys() }}'
+      register: output
+      changed_when: true
+
+    - name: Show restore output
+      ansible.builtin.debug:
+        var: output

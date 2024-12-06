@@ -1,0 +1,53 @@
+---
+
+# This playbook configure bgp push agents
+# please, be very careful, as there is a strict requirement
+# for bgp push uptime.
+# no screwup is permitted.
+# any changes require the utmost attention and testing.
+
+- import_playbook: _asserts.yaml
+  tags:
+    - always
+
+- name: Check if inventory is bgp-push aware
+  hosts: stations
+  gather_facts: false
+  tasks:
+    - name: Check if inventory is bgp-push aware
+      run_once: true
+      ansible.builtin.assert:
+        that:
+          - exa_push|d(False) or absent_exa_push|d(False)
+          - groups.bgp_push or groups.absent_bgp_push
+        msg:
+          "inventory does not support BGP push"
+
+- name: Remove BGP push agents
+  hosts: absent_bgp_push
+  gather_facts: false
+  become: true
+  serial: 1
+  roles:
+    - role: remove_agent_nginx_proxy
+      when: absent_nginx_proxy is defined
+      tags: [nginx]
+    - role: remove_agent_exa_push
+      tags: [bgp-push]
+
+- name: Configure BGP push agents
+  hosts: bgp_push
+  gather_facts: true
+  become: true
+  serial: 1
+  roles:
+    - role: irp_user
+    - role: agent_firewall
+      tags: [firewall]
+    - role: agent_aliases_netplan
+      tags: [ip]
+    - role: agent_nginx_proxy
+      when: nginx_proxy is defined
+      tags: [nginx]
+    - role: agent_exa_push
+      tags: [bgp-push]

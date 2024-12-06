@@ -1,0 +1,92 @@
+---
+- name: Create namespace
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        labels:
+          kubernetes.io/metadata.name: "{{ kubernetes_namespace }}"
+        name: "{{ kubernetes_namespace }}"
+
+
+- name: Create irp-reborn ingress
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    namespace: "{{ kubernetes_namespace }}"
+    definition:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        annotations:
+          cert-manager.io/cluster-issuer: "{{ k8s_cluster_issuer }}"
+          nginx.ingress.kubernetes.io/server-snippet: |
+            location ~* "^/alertmanager" {
+                return 204;
+              }
+          nginx.ingress.kubernetes.io/whitelist-source-range: "{{ whitelist_source_range }}"
+        labels:
+          app.kubernetes.io/name: irp-reborn
+        name: irp-reborn
+      spec:
+        ingressClassName: nginx
+        rules:
+          - host: "{{ frontend_fqdn }}"
+            http:
+              paths:
+                - backend:
+                    service:
+                      name: irp-reborn
+                      port:
+                        number: 80
+                  path: /
+                  pathType: Prefix
+        tls:
+          - hosts:
+              - "{{ frontend_fqdn }}"
+            secretName: "{{ frontend_fqdn }}-tls"
+
+
+- name: Create irp-ui-api ingress
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    namespace: "{{ kubernetes_namespace }}"
+    state: present
+    force: true
+    definition:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        annotations:
+          cert-manager.io/cluster-issuer: "{{ k8s_cluster_issuer }}"
+          nginx.ingress.kubernetes.io/proxy-body-size: 100m
+          nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
+          nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+          nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+          nginx.ingress.kubernetes.io/whitelist-source-range: "{{ whitelist_source_range }}"
+        labels:
+          app.kubernetes.io/name: irp-ui-api
+        name: irp-ui-api
+      spec:
+        ingressClassName: nginx
+        rules:
+          - host: "{{ frontend_fqdn }}"
+            http:
+              paths:
+                - backend:
+                    service:
+                      name: irp-ui-api
+                      port:
+                        number: 80
+                  path: /api
+                  pathType: Prefix
+        tls:
+          - hosts:
+              - "{{ frontend_fqdn }}"
+            secretName: "{{ frontend_fqdn }}-tls"

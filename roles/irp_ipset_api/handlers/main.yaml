@@ -1,0 +1,6 @@
+---
+- name: Restart irp-ipset-api
+  become: true
+  ansible.builtin.systemd:
+    name: irp-ipset-api
+    state: restarted

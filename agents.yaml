@@ -1,0 +1,92 @@
+---
+
+#  This playbook does not support bgp_push code.
+#  See agent_bgp_push for this.
+
+- import_playbook: _asserts.yaml
+  tags:
+    - always
+
+- hosts: stations
+  gather_facts: true
+  pre_tasks:
+    - name: Check available memory
+      ansible.builtin.assert:
+        that:
+          - ansible_memory_mb.real.total >= requirements.agents_memory_mb
+        msg: 'System has only {{ ansible_memory_mb.real.total }} MB memory and requirements is at least {{ requirements.agents_memory_mb }} MB.'
+  roles:
+    - role: irp_user
+    - role: agent_firewall
+      tags: [firewall]
+    - role: agent_aliases_netplan
+      tags: [ip]
+    - role: remove_agent_nginx_proxy
+      when: absent_nginx_proxy is defined
+      tags: [nginx]
+    - role: agent_nginx_proxy
+      when: nginx_proxy is defined
+      tags: [nginx]
+
+- hosts: absent_snmp
+  gather_facts: false
+  roles:
+    - role: remove_agent_snmp_collector
+  tags: [snmp]
+
+- hosts: absent_rttgod
+  gather_facts: false
+  roles:
+    - role: remove_agent_rttgod
+  tags: [rttgod]
+
+- hosts: absent_imgod
+  gather_facts: false
+  roles:
+    - role: remove_agent_imgod
+  tags: [imgod]
+
+- hosts: absent_bgp_pull
+  gather_facts: false
+  roles:
+    - role: remove_agent_exa_pull
+  tags: [bgp_pull]
+
+- hosts: absent_mitigation
+  gather_facts: false
+  serial: 1
+  roles:
+    - role: remove_agent_mitigation
+  tags: [mitigation]
+
+- hosts: snmp
+  gather_facts: false
+  roles:
+    - role: agent_snmp_collector
+  tags: [snmp]
+
+- hosts: rttgod
+  gather_facts: false
+  roles:
+    - role: agent_rttgod
+  tags: [rttgod]
+
+- hosts: imgod
+  gather_facts: false
+  roles:
+    - role: agent_imgod
+  tags: [imgod]
+
+- hosts: bgp_pull
+  gather_facts: false
+  roles:
+    - role: agent_exa_pull
+    - role: agent_bgp_feed_collector
+  tags: [bgp_pull]
+
+- hosts: mitigation
+  gather_facts: false
+  serial: 1
+  roles:
+    - role: agent_mitigation
+  tags: [mitigation]

@@ -1,0 +1,9 @@
+---
+- import_playbook: hosts_prepare.yaml
+
+- name: Configure initial firewall
+  hosts: stations
+  roles:
+    - agent_firewall
+
+- import_playbook: stations_registration.yaml

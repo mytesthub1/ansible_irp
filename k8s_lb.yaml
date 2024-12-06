@@ -1,0 +1,9 @@
+---
+- name: Deploy k8s loadbalancer
+  hosts: k8s_lb
+  gather_facts: false
+  strategy: linear
+  roles:
+    - role: irp_firewall
+      irp_allow_hosts: '{{ groups.all }}'
+    - role: k8s_haproxy_lb

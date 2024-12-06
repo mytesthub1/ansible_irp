@@ -1,0 +1,12 @@
+ansible>=2.9.2, <2.10
+ansible-lint
+black
+molecule
+molecule-openstack>=0.1
+pytest-testinfra
+pytest
+openstacksdk
+dnspython
+netaddr
+mitogen==0.2.10rc1
+

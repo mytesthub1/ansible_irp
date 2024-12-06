@@ -1,0 +1,13 @@
+---
+- name: Create IPR namespace
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        labels:
+          kubernetes.io/metadata.name: "{{ kubernetes_namespace }}"
+        name: "{{ kubernetes_namespace }}"

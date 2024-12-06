@@ -1,0 +1,36 @@
+---
+- name: Restart all mitigation
+  become: true
+  ansible.builtin.systemd:
+    name: irp-mitigation.target
+    state: restarted
+    enabled: true
+    daemon_reload: true
+
+- name: Restart mitigation
+  become: true
+  ansible.builtin.systemd:
+    name: irp-mitigation-{{ item.name }}.service
+    state: restarted
+    enabled: true
+    daemon_reload: true
+  loop: '{{ mitigation }}'
+  loop_control:
+    label: '{{ item.name }}'
+    index_var: idx
+  when: mitigation_exa_conf.results[idx].changed or
+        mitigation_exa_env.results[idx].changed or
+        mitigation_service.results[idx].changed
+
+- name: Check tasks results
+  listen: restart mitigation
+  ansible.builtin.assert:
+    that:
+      - mitigation_exa_conf.results[idx].item == item
+      - mitigation_exa_env.results[idx].item == item
+      - mitigation_service.results[idx].item == item
+    fail_msg: All results must be iterated over the same list
+  loop: '{{ mitigation }}'
+  loop_control:
+    label: '{{ item.name }}'
+    index_var: idx

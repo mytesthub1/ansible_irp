@@ -1,0 +1,27 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Vector
+After=docker.service
+
+[Service]
+ExecStartPre=-/usr/bin/docker rm -f vector
+ExecStartPre=/usr/bin/docker create --name=vector \
+  --net=host \
+  -v /etc/vector/vector.toml:/etc/vector/vector.toml:ro \
+  -v /var/lib/vector:/var/lib/vector \
+  -v /var/log/journal:/var/log/journal \
+  -v /run/log/journal:/run/log/journal \
+  -v /etc/machine-id:/etc/machine-id:ro \
+  -p 8686:8686 \
+  {{ vector_docker_image }}
+
+ExecStart=/usr/bin/docker start -a -i vector
+ExecStop=-/usr/bin/docker stop vector
+SuccessExitStatus=2
+Restart=always
+RestartSec=10s
+TimeoutStartSec=120
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target

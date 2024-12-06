@@ -1,0 +1,69 @@
+---
+- name: Configure and update irp local repo on the hosts
+  hosts: all
+  gather_facts: false
+  vars:
+    local_repo_priority: 1001
+  tasks:
+
+    - name: Install apt-utils
+      become: true
+      ansible.builtin.apt:
+        name: apt-utils
+        state: present
+        cache_valid_time: 3600
+        update_cache: true
+
+    - name: Create repo dir
+      become: true
+      ansible.builtin.file:
+        path: /opt/irp_repo
+        state: directory
+        mode: 0755
+
+    - name: Copy packages to host
+      become: true
+      ansible.builtin.copy:
+        src: debs/
+        dest: /opt/irp_repo
+        mode: 0644
+      notify: apt update
+
+    - name: Generate repsitory Packages file
+      become: true
+      ansible.builtin.shell: apt-ftparchive packages . > Packages
+      args:
+        chdir: /opt/irp_repo
+      changed_when: false
+
+    - name: Generate repsitory Release file
+      become: true
+      ansible.builtin.shell: apt-ftparchive release -o APT::FTPArchive::Release::Origin="irp_local" . > Release
+      args:
+        chdir: /opt/irp_repo
+      changed_when: false
+
+    - name: Add apt repo
+      become: true
+      ansible.builtin.copy:
+        content: deb [trusted=yes] file:/opt/irp_repo ./
+        dest: /etc/apt/sources.list.d/irp_local.list
+        mode: 0644
+      notify: apt update
+
+    - name: Set repo priority
+      become: true
+      ansible.builtin.copy:
+        content: |
+          Package: *
+          Pin: release o=irp_local
+          Pin-Priority: {{ local_repo_priority }}
+        dest: /etc/apt/preferences.d/01_irp_local
+        mode: 0644
+      notify: apt update
+
+  handlers:
+    - name: Apt update
+      become: true
+      ansible.builtin.apt:
+        update_cache: true

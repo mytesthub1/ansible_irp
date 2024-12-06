@@ -1,0 +1,85 @@
+---
+- name: Create irp-devs Role
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    definition:
+      kind: Role
+      apiVersion: rbac.authorization.k8s.io/v1
+      metadata:
+        namespace: "{{ kubernetes_namespace }}"
+        name: irp-devs
+      rules:
+        - apiGroups:
+            - ""
+            - apps
+            - metrics.k8s.io
+          resources:
+            - pods
+            - pods/attach
+            - pods/exec
+            - pods/portforward
+            - pods/proxy
+            - pods/log
+            - pods/status
+            - deployments
+            - deployments/scale
+            - daemonsets
+            - statefulsets
+            - statefulsets/scale
+            - configmaps
+            - secrets
+            - services
+            - services/proxy
+            - persistentvolumeclaims
+            - ingresses
+            - ingresses/status
+            - endpoints
+          verbs:
+            - create
+            - get
+            - list
+            - update
+            - delete
+            - deletecollection
+            - patch
+
+- name: Create irp-devs RoleBinding
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    definition:
+      kind: RoleBinding
+      apiVersion: rbac.authorization.k8s.io/v1
+      metadata:
+        namespace: "{{ kubernetes_namespace }}"
+        name: irp-devs
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: Role
+        name: irp-devs
+      subjects:
+        - apiGroup: rbac.authorization.k8s.io
+          kind: Group
+          name: irp-devs
+
+- name: Create admins ClusterRoleBinding
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    definition:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRoleBinding
+      metadata:
+        name: irp-admin
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: ClusterRole
+        name: cluster-admin
+      subjects:
+        - apiGroup: rbac.authorization.k8s.io
+          kind: Group
+          name: irp-admins

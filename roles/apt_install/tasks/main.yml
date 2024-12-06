@@ -1,0 +1,15 @@
+---
+- name: Install packages
+  ansible.builtin.apt:
+    name: '{{ apt_packages }}'
+    update_cache: true
+    cache_valid_time: '{{ apt_cache_valid_time }}'
+  become: true
+  register: apt_result
+  retries: '{{ apt_retries }}'
+  delay: 10
+  until: apt_result is success  # workaround for lxc transport
+  when: apt_packages is defined
+  tags:
+    - apt
+    - install

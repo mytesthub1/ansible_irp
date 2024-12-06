@@ -1,0 +1,31 @@
+---
+- name: Setup aptly-api
+  hosts: aptly_server
+  gather_facts: false
+  vars:
+    aptly_api_user: "{{ lookup('env', 'APTLY_API_USER') }}"
+    aptly_api_password: "{{ lookup('env', 'APTLY_API_PASSWORD') }}"
+  pre_tasks:
+    - name: Check credentials env variables
+      ansible.builtin.assert:
+        that:
+          - aptly_api_user | length > 0
+          - aptly_api_password | length > 0
+        fail_msg: "APTLY_API_USER and APTLY_API_PASSWORD env variables must be defined"
+
+    - name: Generate nginx htpasswd file
+      become: true
+      ansible.builtin.copy:
+        content: |
+          {{ aptly_api_user }}:{{ aptly_api_password | password_hash('sha256','saltAgHjv') }}
+        dest: /etc/nginx/aptly-api.htpasswd
+        mode: 0600
+        owner: www-data
+        group: www-data
+
+  roles:
+    - role: aptly_api
+    - role: nginx
+      nginx_sites:
+        - site: 'aptly_api'
+          ansible.builtin.template: nginx_aptly_api.j2

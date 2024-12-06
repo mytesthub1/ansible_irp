@@ -1,0 +1,7 @@
+---
+- import_playbook: hosts_prepare.yaml
+- import_playbook: central.yaml
+- import_playbook: databases.yaml
+- import_playbook: k8s_deploy.yaml
+- import_playbook: k8s_app.yaml
+- import_playbook: metrics.yaml

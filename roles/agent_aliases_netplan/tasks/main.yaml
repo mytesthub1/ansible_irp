@@ -1,0 +1,34 @@
+---
+- name: Get interface information
+  ansible.builtin.command: ip a show dev {{ ansible_default_ipv4.interface }}
+  register: interface_output
+  changed_when: false
+  when: ipv4_aliases
+
+- name: Remove old systemd units
+  become: true
+  ansible.builtin.file:
+    path: '/etc/systemd/system/irp-alias-{{ item | ansible.utils.ipaddr("address") }}.service'
+    state: absent
+  loop: '{{ ipv4_aliases }}'
+  vars:
+    interface: '{{ ansible_default_ipv4.interface }}'
+  notify: Daemon_reload
+
+- name: Create netplan configs for aliases
+  become: true
+  ansible.builtin.template:
+    src: netplan-alias.yaml.j2
+    dest: '/etc/netplan/09-alias-{{ ansible_default_ipv4.interface }}.yaml'
+    mode: 0644
+  vars:
+    interface_type: '{{ ansible_facts[ansible_default_ipv4.interface].type }}'
+    interface_types_map:
+      ether: ethernets
+      bond: bonds
+      bonding: bonds
+    interfaces_info: '{{ interface_output.stdout }}'
+  when:
+    - ipv4_aliases
+    - ('dynamic' not in interfaces_info)
+  notify: Netplan_apply

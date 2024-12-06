@@ -1,0 +1,10 @@
+---
+irp_install_state: present  # set to 'latest' by update script
+apt_cache_valid_time: 3600
+
+clickhouse_max_connections: 4096
+clickhouse_keep_alive_timeout: 3
+clickhouse_max_concurrent_queries: 100
+max_server_memory_usage: 0
+clickhouse_metrics_port: 29363
+clickhouse_dbs: []

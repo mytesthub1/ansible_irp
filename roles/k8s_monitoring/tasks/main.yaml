@@ -1,0 +1,78 @@
+---
+- name: Create ServiceMonitor resource for IRP prom federation scraping
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    namespace: "{{ kubernetes_namespace }}"
+    definition:
+      apiVersion: monitoring.coreos.com/v1
+      kind: ServiceMonitor
+      metadata:
+        name: irp-prometheus-federation
+      spec:
+        endpoints:
+          - interval: 20s
+            port: metrics
+            path: '/prometheus/federate'
+            honorLabels: true
+            params:
+              'match[]':
+                - '{job=~".+"}'
+            metricRelabelings:
+              - sourceLabels: [job]
+                regex: node_exporter
+                targetLabel: job
+                replacement: node-exporter
+                action: replace
+        namespaceSelector:
+          matchNames:
+            - "{{ kubernetes_namespace }}"
+        selector:
+          matchLabels:
+            irp-prometheus: "true"
+
+- name: Create irp prometheus federation service
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    namespace: "{{ kubernetes_namespace }}"
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: irp-prometheus-federation
+        labels:
+          irp-prometheus: "true"
+      spec:
+        ports:
+          - protocol: TCP
+            port: 29080
+            targetPort: 29080
+            name: metrics
+
+- name: Create irp prometheus federation endpoints
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    namespace: "{{ kubernetes_namespace }}"
+    definition:
+      apiVersion: v1
+      kind: Endpoints
+      metadata:
+        name: irp-prometheus-federation
+        labels:
+          irp-prometheus: "true"
+      subsets:
+        - addresses: "{{ stations_endpoints | from_yaml }}"
+          ports:
+            - name: metrics
+              port: 29080
+  vars:
+    stations_endpoints: |
+      {% for station in (groups.all | difference(groups.metrics | d([]))) %}
+      - hostname: {{ hostvars[station].inventory_hostname | replace(".", "-") }}
+        ip: {{ hostvars[station].ansible_host }}
+      {% endfor %}

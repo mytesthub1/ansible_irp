@@ -1,0 +1,9 @@
+[Unit]
+Description=clickhouse-backup-trigger timer
+
+[Timer]
+Unit=clickhouse-backup-trigger.service
+OnCalendar={{ clickhouse_backup_schedule }}
+
+[Install]
+WantedBy=timers.target

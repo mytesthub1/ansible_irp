@@ -1,0 +1,11 @@
+---
+- import_playbook: serverscom.generic.setup
+- import_playbook: serverscom.generic._chrony
+
+- hosts: all
+  gather_facts: false
+  roles:
+    - apt_install
+    - hostname
+    - journald
+    - dns_update

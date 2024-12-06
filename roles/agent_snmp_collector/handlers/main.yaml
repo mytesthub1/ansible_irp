@@ -1,0 +1,8 @@
+---
+- name: Restart irp-snmp-collector
+  become: true
+  ansible.builtin.systemd:
+    name: irp-snmp-collector.target
+    state: restarted
+    enabled: true
+    daemon_reload: true

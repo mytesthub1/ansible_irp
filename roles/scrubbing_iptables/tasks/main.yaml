@@ -1,0 +1,34 @@
+---
+- name: Install packages
+  become: true
+  ansible.builtin.apt:
+    name:
+      - iptables
+      - ipset
+      - iptables-persistent
+      - netfilter-persistent
+
+- name: Generate iptables config
+  become: true
+  ansible.builtin.copy:
+    content: |
+      *filter
+      :INPUT ACCEPT [0:0]
+      :FORWARD ACCEPT [0:0]
+      :OUTPUT ACCEPT [0:0]
+      -A FORWARD -p udp -m multiport --sports {{ rate_limit_ports | join(",") }} -m limit --limit 5000/sec -j ACCEPT
+      -A FORWARD -p udp -m multiport --sports {{ rate_limit_ports | join(",") }} -j DROP
+      -A FORWARD -p icmp -m limit --limit 5000/sec -j ACCEPT
+      -A FORWARD -p icmp -j DROP
+      -A FORWARD -m set --match-set botnet src -j DROP
+      COMMIT
+    dest: /etc/iptables/rules.v4
+    mode: 0644
+  notify: Restart netfilter-persistent
+
+- name: Start and enable netfilter-persistent
+  become: true
+  ansible.builtin.systemd:
+    name: netfilter-persistent
+    state: started
+    enabled: true

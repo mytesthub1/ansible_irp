@@ -1,0 +1,30 @@
+---
+- name: Create clickhouse users config
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    namespace: "{{ kubernetes_namespace }}"
+    definition: "{{ lookup('template', 'clickhouse-users-configmap.yaml.j2') }}"
+
+- name: Create clickhouse init script
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    namespace: "{{ kubernetes_namespace }}"
+    definition: "{{ lookup('template', 'clickhouse-init-script-configmap.yaml.j2') }}"
+    state: present
+    force: true
+
+- name: Deploy clickhouse
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    namespace: "{{ kubernetes_namespace }}"
+    definition: "{{ lookup('template', 'clickhouse-deployment.yaml.j2') }}"
+
+- name: Create clickhouse service
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    namespace: "{{ kubernetes_namespace }}"
+    definition: "{{ lookup('template', 'clickhouse-service.yaml.j2') }}"

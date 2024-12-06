@@ -1,0 +1,80 @@
+---
+- name: Nginx | Check if all addresses are available
+  ansible.builtin.assert:
+    that:
+      - item.external_ip in (ipv4_aliases + [ansible_host] + ansible_all_ipv4_addresses)
+    msg:
+      'All used addresses should be in ipv4_aliases/ansbile_host'
+  loop: '{{ nginx_proxy }}'
+
+- name: Agent-nginx-proxy | Install nginx
+  become: true
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    cache_valid_time: 3600
+    update_cache: true
+  tags:
+    - install
+
+- name: Create systemd override directory
+  become: true
+  ansible.builtin.file:
+    path: /etc/systemd/system/nginx.service.d
+    state: directory
+    mode: 0755
+
+- name: Override nginx systemd unit
+  become: true
+  ansible.builtin.copy:
+    content: |
+      [Service]
+      Restart=on-failure
+      RestartSec=5s
+    dest: /etc/systemd/system/nginx.service.d/override.conf
+    mode: 0644
+  notify: Daemon-reload
+  tags:
+    - install
+
+- name: Agent-nginx-proxy | Removing default
+  become: true
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+    mode: 0644
+  notify: Reload nginx
+  tags:
+    - install
+
+- name: Agent-nginx-proxy | Configure proxy sites
+  become: true
+  ansible.builtin.template:
+    src: proxy.conf.j2
+    dest: /etc/nginx/sites-available/{{ item.name }}.conf
+    mode: 0644
+  loop: '{{ nginx_proxy }}'
+  loop_control:
+    label: '{{ item.name }}'
+  notify: Reload nginx
+
+- name: Agent-nginx-proxy | Enable proxy sites
+  become: true
+  ansible.builtin.file:
+    state: link
+    src: /etc/nginx/sites-available/{{ item.name }}.conf
+    dest: /etc/nginx/sites-enabled/{{ item.name }}.conf
+    mode: 0644
+  loop: '{{ nginx_proxy }}'
+  loop_control:
+    label: '{{ item.name }}'
+  when: item.enabled|default(True)
+  notify: Reload nginx
+
+- name: Start nginx
+  become: true
+  ansible.builtin.systemd:
+    name: nginx
+    state: started
+    enabled: true
+    daemon_reload: true

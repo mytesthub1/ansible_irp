@@ -1,0 +1,15 @@
+[Unit]
+Description=ClickHouse Backup Server
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=clickhouse
+Group=clickhouse
+Restart=always
+RestartSec=30
+ExecStart=/usr/bin/clickhouse-backup server
+
+[Install]
+WantedBy=multi-user.target

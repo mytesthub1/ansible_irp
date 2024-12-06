@@ -1,0 +1,2 @@
+---
+clickhouse_manifest_url: https://github.com/Altinity/clickhouse-operator/blob/master/deploy/operator/clickhouse-operator-install-ansible.yaml

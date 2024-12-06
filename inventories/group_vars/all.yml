@@ -1,0 +1,547 @@
+---
+irp_user: irp
+irp_group: irp
+
+ci_ssh_user: self
+
+job_id: "{{ lookup('env', 'JOB_ID') | d(lookup('env', 'USER'), true) }}"
+
+project_name: irp
+
+use_mitogen: true
+
+generic_is_enabled: true
+generic_aas_type: irp
+generic_tier: "{{ tier }}"
+generic_cpufreq_governor: performance
+generic_mlfa: true
+
+generic_users: "{{ users }}"
+
+users:
+  - username: amarao
+    full_name: George Shuklin
+    additional_groups: ['sudo', 'adm', 'dip']
+    uid: 2001
+    authorized_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCxviQn+VLCNRUEnKv4GlQmvMlb8WlKBLVF7lPywbfPMnTwPMGseTCJaoP9UAhJpqYGgGcXXe7i0UHpSFXjJppQ8T4F/eScowY2c+lOH2Qvbl/AVmlPSxl1J5cnrr5FlddZtwDLKAxGFeddaGojTuRot3DU7vfOPeS/iH2EOvsLvlbH+bwbyfPLj3syfc25ZxDYvTEDjUBIUcURa9BKQaN1MeCxPJjJpGexu5StmpP+We1+LnkvvNjz3ocqcEMBnj8ohMKgH1lCf1fdTGhBuyk+LZ7sqO2HMPlUseyiWs9eJwXn0CidpWPy8apqVN3So5/vHAZKowRWaqO80S+xsH9/ amarao@X220t"
+    shell: /bin/bash
+    email: "amarao@webzilla.com"
+  - username: amalakhov
+    full_name: Artem Malakhov
+    additional_groups: ['sudo', 'adm', 'dip']
+    uid: 2002
+    authorized_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDNTbiiDHhgx96glXEnwp4rRd3FlX0sGFJUyToUoxCGaEdkTnf/TVFo27XC8oDqh9+cx3cxpql30rL89akMtS1CHkBdi+BSfQoXQXwF7qBy+gpHOFuWrxO8vyK5qO2pKODH9c+lWe6mKQHp/k44Eisp58sPzWTPrOfuXIo7W5i5ybXrQW6MYDDAQFRTUPle1/5UF2VQ4dR8AvHBiyS50NO7losi5bLu4puJgGhwh9G1NmogpQlari2qMYHJlebgNz55crXkAW7Y9VShYp/p3lSXSmyixc1cI3MBditvlKY4/ln+eq9QANFlhq6CMSuBQ4TcGaSSYRjsQqPjn1RTnv9yVST1HU+/BYcjD6jru3n5fhiQbs6Xla3e/IT1wUEwp9nhvw5lK0Tle7Eauc1BHaTUTM++EeBKUx5x1HxuvzGnAr4KXbZOu5Qs/Tb0cjTQ70fuG8ta3K86ZTOvCBrncoQ6UgKKKn9OuFg2uT/peNMuTaM2FFaTItLRb9ohS4KKlKtLS/8oQ7/zZrGmD4oJJY2VWZPklzBXcQFL/xEVANWKeyUrRH/ykbKkIXjzKN1nuKwUDnYjzoPESfGE51ppaTpiWRKz/bITAiWWDjkWfKd0VlnqCSz5eMtTX4FU2JvtT8mUbev92lDw7b5tmhpkDWA00o54KqK9viWHDKfgXC2wNw== amalakhov@mac15"
+    email: "amalakhov@webzilla.com"
+  - username: sgalushka
+    full_name: sergey galushka
+    additional_groups: ['sudo', 'adm', 'dip']
+    uid: 2007
+    authorized_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCXdlqH3FsAkfwPhFbSfrJdfmsXqBOXqN6cE1zt0qwmdNCl/HfqiYyECP2PaqSmbGVKYt54P+nZ0PXPqlhaXc6JJZOwnO62IReqN8MGHGr/u1kgCh3rn3a66ieEbTNrf2hA+gE8Qt2EA3HU1JgBWNcCaYiqMvQRVyzrctBhCqeH2Hr+7Da6PXe+PC9VK8+KP/Q7w0C+mCXcoAA7Hs4UJcgbpfuNc3qzQwmA8Oh6KJQNrcuZ0E7ejeN517AkNPXzUkSJmxxGCgpdB7HMNac6vUjIsPco8dvqzfeHRIyL6R2OtYxFvpDOwe/RH36QYQHuTPl3DpItjEqGvmO612gWxV67 user@user-Inspiron-N5110"
+    email: "gsv@webzilla.com"
+  - username: dani
+    full_name: Nikolai Davydov
+    additional_groups: ['sudo', 'adm', 'dip']
+    uid: 2015
+    authorized_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDjRqDRy0C7nqlkh6Ri7Dy7W3ISSbF2K4AFO0GCPsUtT dani@servers.com"
+    email: "dani@servers.com"
+  - username: jenkins
+    full_name: Ci Jenkins
+    additional_groups: ['sudo', 'adm', 'dip']
+    uid: 2042
+    authorized_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDTDIjd667KXYw3gpuWRcg77k7LiFVH9U1lhIgde1JUjreCw3ZPzHCMEJXhY5JPIqByG5RD49KOnKBkYiue5sqoDtlTD6Y3NmQUqHsR5hazM3/gTNAOgfxbQQPMKbFn6lRXoSZNzWp84v7t2sYTfV9YlvDKUqkOMIUGxlWWX7v6p3PT2a6OJOWq0ciJ3qyc5dyYV3zXycZGcBrwhY2eV/hkP8/s6ewWtmqbBQZX7yhN2jsGkGlGc4GuKRlfEsOKinUOFfMpaqe+KFiqCO3N9xFVMijyKhxEYcBPZTpXDDP6ZiCPuWU0j4IDMPZPYqdSL56ghSgBcEDPbbrCiKgpy/HR jenkins.mgm.servers.com"
+  - username: sid
+    full_name: Ivan Semenov
+    additional_groups: ['sudo', 'adm', 'dip']
+    uid: 2013
+    authorized_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDqDDaaDf3JuwePnkJc0MDx9SevAR6oUOCHmR2WcSwNWkLhAOMan3XSOTqUJAo3/CCHrhlpguM2jSgctryUGxCt5iZkwUreB2pFHNNH3U1FfHgK3KIqqoHCtTbbGuppRGFeJJvvXeXJHB87iBFixIfrZg9jJYABLN73mnmw6JKMukV0MvCLaj3o1XqT0G6mKBu8e+qPE3hJ5ukKlyuY4bF6wkCsqQ0dShE9GiYY0ALCc5fjgK1EBpzl/JXSP3AusknjVmzm70oshQKh/TCiAWO9zvwrEtIxf4gBjQ3TmZRBNbp0iloR5Ib/Vc6xRAKq3M17suF+Lwwogh2EGaL5LQah sid@semenov-laptop"
+    email: "sid@servers.com"
+  - username: vills
+    full_name: Vil Surkin
+    additional_groups: ['sudo', 'adm', 'dip']
+    uid: 2014
+    authorized_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCncQPx7xBjQ5vFy1s8O+FQLj+XnWyfsVQxSJMx08u40UCjKuWYcV35hoMclYOdww3BTgTz87C6lz2kLueogv6v5x6q4jzXXAZj3RJ5tBoJJr42TR3iAwj+Vht+2V7PGhTA+JAC0laE/7nNr2R47+ocmz+srRd72wLYsnvHpb2ZzqblP+jx43s8jl6lrg0T76XJvOq4eOoGpyjzlVKtpmBv/FRY0DBYlTGrzqR+lNBLg21SRGO314UhEnw4KmGD4Pcp9G/BebcemUTtELr93Bj8sr28PTaiGCMbMHfjhnVO15jgrVF+QZeuMaL3613FNhrKQo/6cd1B+KPQKWCbgkfp vills"
+    email: "vills@servers.com"
+  - username: rnd
+    full_name: RnD User
+    uid: 3000
+    additional_groups: ['sudo', 'adm']
+  - username: sops
+    full_name: SOPS User
+    uid: 3001
+    additional_groups: ['sudo', 'adm']
+
+generic_ssh_trusted_ca_keys:
+  - name: rnd_public_ca
+    key_value: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCurDfbTnANrRBlYnqisZ4RIj4goNWu869qwZbIEoP1nYezv0Ruiz6Do4w+dDBRqttlTp1x3SDcY42E9PKKEgmLwbVrMb4yPaNSowQiZTOTxcQVLFkaDFcy+xyDmxQl3UgRs44Gk3Ph3jnW+KU2GLAY6Ox4/T72UWL9tbplIMh0wnrABnhMBEpVkz4WYrYib/RKjIeaWTA0YomAQCCl9zaAV2rww3pqCRvhifWuooVJ+uvVhkImaKVXyeGC/1fIXtTUwRGeuJHfrbOQPvylLOANL+k8H08RoWYnvqOMIUHtHVJPArx3eUBzF9Y3B2fUoRPMcAlcYcG0cYRGq267XuHp prod"
+
+generic_nopasswd_sudo_groups: ['sudo']
+generic_users_remove:
+  - username: networkers
+  - username: kv
+generic_root_password_remove: true
+generic_ntp: true
+
+generic_apt_repos:
+  - '{{ irp_taco_repo }}'
+  - '{{ irp_tools_repo }}'
+
+common_monitoring_scraping_hosts: "{{ [inventory_hostname] }}"
+common_monitoring_container_tool: /usr/bin/docker
+common_monitoring_prom: true
+common_monitoring_exporters: true
+common_monitoring_essential_exporters: true
+common_monitoring_grafana: true
+common_monitoring_disable_docker_iptables: true
+common_monitoring_manage_docker: true
+common_monitoring_interface_types:
+  - public
+  - private
+common_monitoring_nginx_extra_acl: '{{ mgmt_access_ips + monitoring_ips + k8s_ips + [ansible_host] }}'
+common_monitoring_postgres_exporter_user: '{{ postgres_db_username }}'
+common_monitoring_postgres_exporter_password: '{{ postgres_db_password }}'
+
+common_monitoring_prometheus_alert_base_rules:
+  groups:
+    - name: targets
+      rules:
+        - alert: Target down
+          expr: up == 0
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            info: '{{ targets_info }} {{ targets_url }}'
+
+apt_packages:
+  - ssh
+  - vim
+  - atop
+  - gawk
+  - haveged
+  - acl
+  - xz-utils
+  - curl
+  - screen
+  - traceroute
+  - hdparm
+  - smartmontools
+
+mgmt_access_list_common:
+  - name: rnd EU external
+    cidr: 173.237.66.16/28
+  - name: rnd US extenal
+    cidr: 173.237.67.16/28
+  - name: RND EU internal
+    cidr: 192.168.238.16/28
+  - name: RND US internal
+    cidr: 192.168.239.16/28
+  - name: sops EU external
+    cidr: 173.237.64.16/28
+  - name: sops US external
+    cidr: 173.237.65.16/28
+  - name: sops EU internal
+    cidr: 192.168.236.16/28
+  - name: sops US internal
+    cidr: 192.168.237.16/28
+  - name: psv EU external
+    cidr: 173.237.64.2/32
+  - name: psv US external
+    cidr: 173.237.65.2/32
+  - name: psv EU internal
+    cidr: 192.168.236.2/32
+  - name: psv US internal
+    cidr: 192.168.237.2/32
+  - name: amalakhov
+    cidr: 192.168.236.124/32
+  - name: amalakhov public
+    cidr: 173.237.64.124/32
+  - name: gsv
+    cidr: 192.168.236.125/32
+  - name: gsv public
+    cidr: 173.237.64.125/32
+  - name: dani
+    cidr: 192.168.238.104/32
+  - name: dani public
+    cidr: 173.237.66.104/32
+  - name: dani us
+    cidr: 192.168.239.104/32
+  - name: dani public us
+    cidr: 173.237.67.104/32
+  - name: gitlab-runner
+    cidr: 10.218.2.253/32
+  - name: gitlab-runner-new
+    cidr: 10.218.2.28/32
+  - name: gitlab-runner public
+    cidr: 172.255.232.75/32
+  - name: jenkins-slave prod public
+    cidr: 142.91.9.149/32
+  - name: jenkins-slave prod private
+    cidr: 10.215.2.183/32
+
+mgmt_access_list_additional:
+  - name: BO
+    cidr: 192.168.247.41/32
+  - name: BO
+    cidr: 192.168.247.42/32
+  - name: BO
+    cidr: 192.168.247.43/32
+
+mgmt_access_list: "{{ mgmt_access_list_common + mgmt_access_list_additional | d([]) }}"
+
+users_access_list:
+  - name: webzilla vpn
+    cidr: 78.140.128.228/32
+  - name: webzilla vpn
+    cidr: 74.117.181.234/32
+  - name: webzilla vpn
+    cidr: 67.58.110.192/26
+  - name: webzilla vpn
+    cidr: 67.58.111.192/26
+  - name: networking vpn
+    cidr: 67.58.110.32/27
+  - name: networking vpn
+    cidr: 67.58.111.32/27
+  - name: solution architects vpn
+    cidr: 67.58.110.112/28
+  - name: solution architects vpn
+    cidr: 67.58.111.112/28
+  - name: servers.com vpn public
+    cidr: 173.237.64.0/22
+  - name: savo-eu-int
+    cidr: 192.168.236.118/32
+  - name: savo-eu-ext
+    cidr: 173.237.64.118/32
+  - name: savo-us-int
+    cidr: 192.168.237.118/32
+  - name: savo-us-ext
+    cidr: 173.237.65.118/32
+  - name: dean-eu-int
+    cidr: 192.168.236.123/32
+  - name: dean-eu-ext
+    cidr: 173.237.64.123/32
+  - name: dean-us-int
+    cidr: 192.168.237.123/32
+  - name: dean-us-ext
+    cidr: 173.237.65.123/32
+  - name: kz
+    cidr: 192.168.237.34/32
+  - name: LiquidWeb
+    cidr: 67.43.14.16/32
+  - name: LiquidWeb
+    cidr: 50.28.76.132/32
+  - name: LiquidWeb
+    cidr: 98.113.245.160/32
+  - name: LiquidWeb
+    cidr: 23.105.171.89/32
+
+external_servers_access_list:
+  - name: irp-scrubbing
+    cidr: 45.129.175.42/32
+
+http_access_ips: '{{ users_access_list + flow_storage_access_list + external_servers_access_list | d([]) }}'
+station_access_list: '{{ groups.app | d([]) + groups.metrics | d([]) }}'
+
+mgmt_access_ips: "{{ mgmt_access_list | map(attribute='cidr') | list }}"
+users_access_ips: "{{ users_access_list | map(attribute='cidr') | list }}"
+k8s_ips: "{{ kubernetes_nodes | d([]) | map(attribute='ip') | list }}"
+flow_storage_access_ips: "{{ flow_storage_access_list | map(attribute='cidr') | list }}"
+external_servers_access_ips: "{{ external_servers_access_list | map(attribute='cidr') | list }}"
+
+flow_storage_access_list:
+  - name: flow-capture-eu1.staging.irp.servers.im
+    cidr: 23.109.169.76/32
+  - name: flow-capture-eu2.staging.irp.servers.im
+    cidr: 23.109.169.108/32
+  - name: collector-eu1.flow-storage.irp.servers.im
+    cidr: 23.109.169.100/32
+  - name: collector-eu2.flow-storage.irp.servers.im
+    cidr: 23.109.169.140/32
+  - name: collector-us1.flow-storage.irp.servers.im
+    cidr: 172.240.248.132/32
+  - name: collector-us2.flow-storage.irp.servers.im
+    cidr: 172.240.248.212/32
+  - name: flow-storage-sg1.flow-storage.irp.servers.im
+    cidr: 23.109.73.28/32
+  - name: flow-storage-sg2.flow-storage.irp.servers.im
+    cidr: 23.109.73.20/32
+  - name: flow-storage-mow1.flow-storage.irp.servers.im
+    cidr: 23.105.254.92/32
+  - name: flow-storage-mow2.flow-storage.irp.servers.im
+    cidr: 23.105.254.108/32
+
+  - name: flow-capture-eu1.staging.irp.servers.im-private
+    cidr: 10.215.2.228
+  - name: flow-capture-eu2.staging.irp.servers.im-private
+    cidr: 10.215.1.140
+  - name: clickhouse-flow-storage-eu1.staging.irp.servers.im-private
+    cidr: 10.215.3.156
+  - name: clickhouse2-flow-storage-eu1.staging.irp.servers.im-private
+    cidr: 10.215.0.20
+  - name: clickhouse3-flow-storage-eu1.staging.irp.servers.im-private
+    cidr: 10.215.1.172
+  - name: flow-storage-sg1.flow-storage.irp.servers.im-private
+    cidr: 10.215.2.76
+  - name: flow-storage-sg2.flow-storage.irp.servers.im-private
+    cidr: 10.215.2.60
+  - name: flow-storage-sg3.flow-storage.irp.servers.im-private
+    cidr: 10.215.0.84
+  - name: flow-storage-mow1.flow-storage.irp.servers.im-private
+    cidr: 10.215.2.12
+  - name: flow-storage-mow2.flow-storage.irp.servers.im-private
+    cidr: 10.215.2.28
+  - name: flow-storage-mow3.flow-storage.irp.servers.im-private
+    cidr: 10.215.0.116
+  - name: collector-us1.flow-storage.irp.servers.im-private
+    cidr: 10.215.3.28
+  - name: collector-us2.flow-storage.irp.servers.im-private
+    cidr: 10.215.2.196
+  - name: clickhouse-us1.flow-storage.irp.servers.im-private
+    cidr: 10.215.3.220
+  - name: clickhouse-us2.flow-storage.irp.servers.im-private
+    cidr: 10.215.2.4
+  - name: clickhouse-us3.flow-storage.irp.servers.im-private
+    cidr: 10.215.0.52
+  - name: collector-eu1.flow-storage.irp.servers.im-private
+    cidr: 10.215.3.180
+  - name: collector-eu2.flow-storage.irp.servers.im-private
+    cidr: 10.215.3.244
+  - name: clickhouse-eu1.flow-storage.irp.servers.im-private
+    cidr: 10.215.3.4
+  - name: clickhouse-eu2.flow-storage.irp.servers.im-private
+    cidr: 10.215.3.116
+  - name: clickhouse-eu3.flow-storage.irp.servers.im-private
+    cidr: 10.215.3.140
+
+
+irp_api_local_ip: 127.0.0.1
+irp_api_local_port: 9080
+irp_api_host: "https://{{ hostvars[groups.app_ui[0]].inventory_hostname }}"
+
+exa_push_mitigation_version: 4.*
+
+irp_dns_zone: irp.servers.im
+ddns_key: "{{ lookup('env', 'DDNS_KEY') | default('') }}"
+
+test_var_for_override: defined_in_group_vars/all.yaml
+
+irp_host_ips: "{{ groups.all | d | map('extract', hostvars) | map(attribute='ansible_host') | list }}"
+irp_additional_ips: "{{ groups.all | d | map('extract', hostvars) | map(attribute='ipv4_additional_addresses') | flatten }}"
+all_irp_ips: "{{ irp_host_ips + irp_additional_ips }}"
+monitoring_ips: "{{ groups.metrics | d | map('extract', hostvars) | map(attribute='ansible_host') | list + groups.metrics | d | map('extract', hostvars) | map(attribute='ipv4_additional_addresses') | flatten }}"
+app_ips: "{{ groups.app | d | map('extract', hostvars) | map(attribute='ansible_host') | list + groups.app | d | map('extract', hostvars) | map(attribute='ipv4_additional_addresses') | flatten }}"
+stations_ips: "{{ groups.stations | d | map('extract', hostvars) | map(attribute='ansible_host') | list + groups.stations | d | map('extract', hostvars) | map(attribute='ipv4_additional_addresses') | flatten }}"
+
+clickhouse_allowed_networks: "{{ ['127.0.0.0/8'] + [ansible_host] + app_ips | d([]) + monitoring_ips | d([]) + k8s_ips | d([]) + mgmt_access_ips | d([]) + stations_ips | d([]) }}"
+
+irp_apt_repo_host: apt.irp.servers.im
+
+irp_tools_repo:
+  name: irp-tools
+  key_data: |
+    -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+    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
+    1jY=
+    =DPSu
+    -----END PGP PUBLIC KEY BLOCK-----
+  repo: 'deb http://{{ irp_apt_repo_host }}/irp-tools/ focal main'
+
+irp_proposed_repo:
+  name: irp-proposed
+  key_data: |
+    -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+    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
+    1jY=
+    =DPSu
+    -----END PGP PUBLIC KEY BLOCK-----
+  repo: 'deb http://{{ irp_apt_repo_host }}/irp-proposed focal main'
+
+irp_taco_repo:
+  name: irp-taco
+  key_data: |
+    -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+    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
+    1jY=
+    =DPSu
+    -----END PGP PUBLIC KEY BLOCK-----
+  repo: 'deb http://{{ irp_apt_repo_host }}/irp-taco focal main'
+
+irp_helm_repo_user: helm
+irp_helm_repo_password: 4SueskUzq4M4RBx-7fBJ
+
+k8s_users:
+  - amalakhov
+  - gsv
+k8s_admin_users:
+  - vills
+  - sid

@@ -1,0 +1,7 @@
+---
+- name: Prometheus reload config
+  delegate_to: '{{ common_monitoring_scraper }}'
+  become: true
+  ansible.builtin.systemd:
+    name: scmon_prometheus
+    state: reloaded

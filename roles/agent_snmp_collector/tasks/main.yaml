@@ -1,0 +1,80 @@
+---
+- name: Agent-snmp-collector | Install irp-snmp-collector
+  become: true
+  ansible.builtin.apt:
+    name: irp-snmp-collector
+    state: '{{ irp_install_state }}'
+    update_cache: true
+    cache_valid_time: '{{ apt_cache_valid_time }}'
+  notify:
+    - Restart irp-snmp-collector
+  tags:
+    - irp_update
+
+- name: Agent-snmp-collector | Create config directory
+  become: true
+  ansible.builtin.file:
+    path: /etc/irp/{{ item.name }}
+    state: directory
+    mode: 0755
+  loop: '{{ snmp }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Agent-snmp-collector | Create logback.xml
+  become: true
+  ansible.builtin.copy:
+    src: logback.xml
+    dest: /etc/irp/{{ item.name }}/logback.xml
+    mode: 0644
+  loop: '{{ snmp }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Agent-snmp-collector | Create log directory
+  become: true
+  ansible.builtin.file:
+    path: /var/log/irp/{{ item.name }}
+    state: directory
+    mode: 0755
+  loop: '{{ snmp }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Agent-snmp-collector | Create systemd target
+  become: true
+  ansible.builtin.template:
+    src: irp-snmp-collector.target
+    dest: /etc/systemd/system/irp-snmp-collector.target
+    mode: 0644
+
+- name: Agent-snmp-collector | Create systemd services for each instance
+  become: true
+  ansible.builtin.template:
+    src: irp-snmp-collector.service.j2
+    dest: /etc/systemd/system/{{ item.service_name }}.service
+    mode: 0644
+  loop: '{{ snmp }}'
+  loop_control:
+    label: '{{ item.name }}'
+  notify:
+    - Restart irp-snmp-collector
+
+- name: Agent-snmp-collector | Enable each service
+  become: true
+  ansible.builtin.systemd:
+    name: '{{ item.service_name }}.service'
+    enabled: true
+    state: started
+    daemon_reload: true
+  loop: '{{ snmp }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Agent-snmp-collector | Enable and start target
+  become: true
+  ansible.builtin.systemd:
+    name: irp-snmp-collector.target
+    state: started
+    enabled: true
+    daemon_reload: true

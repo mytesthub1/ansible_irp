@@ -1,0 +1,20 @@
+---
+- name: Install irp-ipset-api
+  become: true
+  ansible.builtin.apt:
+    name: irp-ipset-api
+    state: '{{ irp_install_state }}'
+    update_cache: true
+    cache_valid_time: '{{ apt_cache_valid_time }}'
+  notify:
+    - Restart irp-ipset-api
+  tags:
+    - irp_update
+
+- name: Start and enable irp-ipset-api
+  become: true
+  ansible.builtin.systemd:
+    name: irp-ipset-api
+    state: started
+    enabled: true
+    daemon-reload: true

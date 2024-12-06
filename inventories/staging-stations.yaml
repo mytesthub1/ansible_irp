@@ -1,0 +1,43 @@
+---
+k8s_staging:
+  hosts:
+    station.staging-k8s.irp.servers.im:
+      ansible_host: 10.82.150.170
+      ipv4_aliases:
+        - 188.42.195.144
+      ipv4_additional_addresses:
+        - 188.42.62.3
+    station-rtt-god-lux.k8s-staging.irp.servers.im:
+      ansible_host: 10.82.150.174
+      ipv4_aliases:
+        - 188.42.195.134
+        - 188.42.195.136
+      ipv4_additional_addresses:
+        - 188.42.62.6
+    station-preping-lux.k8s-staging.irp.servers.im:
+      ansible_host: 10.82.150.167
+      ipv4_aliases: []
+      ipv4_additional_addresses:
+        - 188.42.62.16
+    # station-ipset.staging-k8s.irp.servers.im:
+    #   ansible_host: 10.82.151.216
+    #   ipv4_aliases: []
+    station-rtt-god-us.k8s-staging.irp.servers.im:
+      ansible_host: 10.82.151.122
+      ipv4_aliases:
+        - 173.0.157.106
+        - 173.0.157.108
+      ipv4_additional_addresses:
+        - 204.74.251.46
+
+
+all:
+  vars:
+    test_var_for_override: defined_in_inventory_file
+
+stations:
+  hosts:
+    station.staging-k8s.irp.servers.im:
+    station-rtt-god-lux.k8s-staging.irp.servers.im:
+    station-preping-lux.k8s-staging.irp.servers.im:
+    station-rtt-god-us.k8s-staging.irp.servers.im:

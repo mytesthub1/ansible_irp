@@ -1,0 +1,61 @@
+---
+- name: Collect facts
+  become: true
+  become_user: "{{ debrepo_aptly_user }}"
+  setup:
+    gather_subset:
+      - '!all'
+
+- name: mirror update | update mirror
+  become: true
+  become_user: "{{ debrepo_aptly_user }}"
+  aptly_mirror:
+    name: "{{ debrepo_mirror_slug }}-{{ debrepo_mirror_dist | replace('/', '') }}"
+    state: present
+    archive_url: "{{ debrepo_mirror_upstream_url }}"
+    distribution: "{{ debrepo_mirror_dist }}"
+    components: "{{ debrepo_mirror_components }}"
+    architectures: "{{ debrepo_mirror_architectures }}"
+    update_policy: "{{ deprepo_mirror_update_policy | d('once') }}"
+    update_deadline: "{{ debrepo_mirror_update_deadline | d(omit) }}"
+
+- name: mirror update | create snapshot
+  become: true
+  become_user: "{{ debrepo_aptly_user }}"
+  aptly_snapshot:
+    state: updated
+    name: "snapshot-{{ debrepo_mirror_slug }}-{{ debrepo_mirror_dist }}-{{ ansible_date_time.date }}"
+    src: "{{ debrepo_mirror_slug }}-{{ debrepo_mirror_dist | replace('/', '') }}"
+    drop_dependencies: true
+
+- name: mirror update | publish snapshot
+  become: true
+  become_user: "{{ debrepo_aptly_user }}"
+  aptly_publish_snapshot:
+    state: switched
+    prefix: "temp/{{ debrepo_mirror_slug }}"
+    snapshot_name: "snapshot-{{ debrepo_mirror_slug }}-{{ debrepo_mirror_dist }}-{{ ansible_date_time.date }}"
+    distribution: "{{ debrepo_mirror_dist }}"
+  register: publish
+
+- name: Save temporary publish line
+  ansible.builtin.set_fact:
+    debrepo_temprorary_publish_sources_line: "deb http://{{ debrepo_publish_host | d(ansible_host) }}/{{ publish.publish.Prefix }}/ {{ publish.publish.Distribution }} {{ debrepo_mirror_components | join(' ') }}"
+
+- name: Generating debrepo temprorary_publish report
+  delegate_to: localhost
+  ansible.builtin.copy:
+    dest: '{{ temporary_publisher_report_path }}'
+    content: |
+      ---
+      temporary_publisher_apt_line: '{{ debrepo_temprorary_publish_sources_line }}'
+      temporary_publisher_url: 'http://{{ debrepo_publish_host | d(ansible_host) }}/{{ publish.publish.Prefix }}/'
+      temporary_publisher_dist: '{{ publish.publish.Distribution }}'
+      temporary_publisher_components: {{ debrepo_mirror_components }}
+    mode: 0644
+  when: temporary_publisher_report_path is defined
+
+- debug:
+    msg:
+      - "Now you can add following line to apt sources"
+      - "{{ debrepo_temprorary_publish_sources_line }}"

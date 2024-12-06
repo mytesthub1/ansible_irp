@@ -1,0 +1,110 @@
+server {
+    listen *:80 default_server;
+    server_name {{ reborn_fqdn_frontend }};
+
+{% for rule in nginx_allowed_ips|d([]) %}
+    allow {{ rule.cidr }};  # {{ rule.name }}
+{% endfor %}
+
+{% for host in nginx_allowed_hosts|d([]) %}
+    allow {{ hostvars[host].ansible_host }};  # {{  hostvars[host].inventory_hostname }}
+{% for ip in hostvars[host].ipv4_additional_addresses|d([]) %}
+    allow {{ ip }};  # {{ hostvars[host].inventory_hostname }}
+{% endfor %}
+{% endfor %}
+    deny all;
+
+    location ^~ /api/ {
+        client_max_body_size 200m;
+        proxy_pass http://{{ irp_ui_api_address }}:{{ irp_ui_api_port }};
+        proxy_http_version  1.1;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-User $http_authorization;
+        proxy_set_header X-Forwarded-Protocol http;
+        proxy_set_header X-Url-Scheme  http;
+{% for node in kubernetes_nodes | d([]) %}
+        allow {{ node.ip }};  # {{ node.name }}
+{% endfor %}
+        deny all;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen *:443 ssl http2 default_server;
+
+    ssl_certificate {{ ssl_certificate }};
+    ssl_certificate_key {{ ssl_certificate_key }};
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+    ssl_ciphers "EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH";
+    ssl_ecdh_curve secp384r1;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_tickets off;
+    ssl_stapling on;
+    ssl_stapling_verify on;
+    add_header X-Frame-Options DENY;
+    add_header X-Content-Type-Options nosniff;
+    ssl_dhparam /etc/ssl/dhparam.pem;
+
+    root /usr/share/irp-frontend-reborn/;
+    index index.html;
+
+    server_name {{ reborn_fqdn_frontend }};
+    proxy_connect_timeout 240;
+    proxy_send_timeout 240;
+    proxy_read_timeout 240;
+    send_timeout 240;
+
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_buffers 16 8k;
+    gzip_http_version 1.1;
+    gzip_min_length 256;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+
+{% for rule in nginx_allowed_ips|d([]) %}
+    allow {{ rule.cidr }};  # {{ rule.name }}
+{% endfor %}
+
+{% for host in nginx_allowed_hosts|d([]) %}
+    allow {{ hostvars[host].ansible_host }};  # {{  hostvars[host].inventory_hostname }}
+{% for ip in hostvars[host].ipv4_additional_addresses|d([]) %}
+    allow {{ ip }};  # {{ hostvars[host].inventory_hostname }}
+{% endfor %}
+{% endfor %}
+    deny all;
+
+    error_page 403 =404 @notfound;
+
+    location @notfound {
+        return 404;
+    }
+
+    location ^~ /api/ {
+        client_max_body_size 200m;
+        proxy_pass http://{{ irp_ui_api_address }}:{{ irp_ui_api_port }};
+        proxy_http_version  1.1;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-User $http_authorization;
+        proxy_set_header X-Forwarded-Protocol https;
+        proxy_set_header X-Forwarded-Ssl on;
+        proxy_set_header X-Url-Scheme  https;
+    }
+    location /alertmanager/api/v2/silences {
+        limit_except GET { deny  all; }
+        proxy_pass http://127.0.0.1:29088;
+        proxy_http_version  1.1;
+        proxy_set_header Host $http_host;
+    }
+    location / {
+        try_files $uri /index.html;
+    }
+}

@@ -1,0 +1,91 @@
+---
+all:
+  hosts:
+    scrubbing-eu1.irp.servers.im:
+      # WZ 1f1-20-d9894
+      ansible_host: 45.129.175.42
+      ansible_port: 22222
+      ipv4_additional_addresses: []
+      net:
+        cars_100G_bond:
+          iface: bond0
+          members:
+            - enp152s0f0np0
+            - enp152s0f1np1
+          vlans:
+            - id: 101
+              name: ams3 in
+              address: 172.28.120.247/31
+            - id: 102
+              name: ams3 out
+              address: 172.28.120.249/31
+            - id: 103
+              name: ams1 in
+              address: 172.28.120.251/31
+            - id: 104
+              name: ams1 out
+              address: 172.28.120.253/31
+        dcspine:
+          iface: eno8303
+          address: 192.168.0.5/24
+          routes:
+            - to: 0.0.0.0/0
+              via: 192.168.0.254
+            - to: 23.111.24.145/32
+              via: 192.168.0.254
+            - to: 23.109.94.220/32
+              via: 192.168.0.254
+            - to: 23.109.94.244/32
+              via: 192.168.0.254
+            - to: 23.109.68.148/32
+              via: 192.168.0.254
+            - to: 23.109.68.124/32
+              via: 192.168.0.254
+            - to: 173.237.66.16/28
+              via: 192.168.0.254
+            - to: 173.237.64.16/28
+              via: 192.168.0.254
+            - to: 173.237.64.2/32
+              via: 192.168.0.254
+            - to: 173.237.64.124/32
+              via: 192.168.0.254
+            - to: 173.237.64.125/32
+              via: 192.168.0.254
+            - to: 173.237.66.104/32
+              via: 192.168.0.254
+            - to: 172.255.232.75/32
+              via: 192.168.0.254
+        webzilla:
+          iface: eno8403
+      bgp_asn: 7979
+      bgp_router_id: 172.28.120.255
+      bgp_peers:
+        - ip: 172.28.120.252
+          asn: 7979
+        - ip: 172.28.120.248
+          asn: 7979
+      common_monitoring_additional_interfaces:
+        - name: bond0
+          speed: 200000
+          bonding: true
+        - name: eno8303
+          speed: 1000
+        - name: eno8403
+          speed: 1000
+      common_monitoring_interface_types: []
+      common_monitoring_raid_types: [perc]
+      common_monitoring_dell_hw: true
+      common_monitoring_apt: false
+      common_monitoring_nginx_listen: 192.168.0.5:29080
+
+webzilla:
+  hosts:
+    scrubbing-eu1.irp.servers.im:
+
+production:
+  hosts:
+    scrubbing-eu1.irp.servers.im:
+
+scrubbing:
+  hosts:
+    scrubbing-eu1.irp.servers.im:

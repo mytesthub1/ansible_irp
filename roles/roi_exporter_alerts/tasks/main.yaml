@@ -1,0 +1,28 @@
+---
+- name: Create roi_exporter alerts rules
+  delegate_to: '{{ common_monitoring_scraper }}'
+  become: true
+  run_once: true
+  ansible.builtin.copy:
+    owner: root
+    group: root
+    mode: 0644
+    dest: '{{ common_monitoring_prometheus_dir }}/alert.roi_exporter.rules'
+    content: |
+      # Ansible managed
+      {{ alert_roi_exporter_rules | to_nice_yaml }}
+  notify: Prometheus reload config
+
+- name: Create roi_exporter alerts tests
+  delegate_to: '{{ common_monitoring_scraper }}'
+  run_once: true
+  become: true
+  ansible.builtin.copy:
+    owner: root
+    group: root
+    mode: 0644
+    dest: '{{ common_monitoring_prometheus_dir }}/alert.roi_exporter.test'
+    content: |
+      # Ansible managed
+      {{ alert_roi_exporter_tests | to_nice_yaml }}
+  notify: Prometheus reload config

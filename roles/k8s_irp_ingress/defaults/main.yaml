@@ -1,0 +1,5 @@
+---
+postgres_k8s: false
+clickhouse_k8s: false
+station_access_list: []
+whitelist_source_range: "{{ (mgmt_access_ips | d([]) + users_access_ips | d([]) + flow_storage_access_ips | d([]) + app_ips | d([]) + monitoring_ips | d([]) + external_servers_access_ips | d([])) | join(', ') }}"

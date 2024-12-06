@@ -1,0 +1,52 @@
+---
+- name: Stop agent
+  become: true
+  ansible.builtin.systemd:
+    name: '{{ item.service_name }}'
+    state: stopped
+    enabled: false
+  loop: '{{ absent_mitigation }}'
+  loop_control:
+    label: '{{ item.name }}'
+  register: service_stop
+  failed_when:
+    - service_stop.failed
+    - ("Could not find the requested" not in service_stop.msg)
+
+- name: Remove config directory
+  become: true
+  ansible.builtin.file:
+    path: /etc/irp/{{ item.name }}
+    state: absent
+  loop: '{{ absent_mitigation }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Remove log directory
+  become: true
+  ansible.builtin.file:
+    path: /var/log/irp/{{ item.name }}
+    state: absent
+  loop: '{{ absent_mitigation }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Remove exabgp directory
+  become: true
+  ansible.builtin.file:
+    path: /etc/exabgp/{{ item.name }}
+    state: absent
+  loop: '{{ absent_mitigation }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Delete systemd services for each instance
+  become: true
+  ansible.builtin.file:
+    path: /etc/systemd/system/{{ item.service_name }}.service
+    state: absent
+  loop: '{{ absent_mitigation }}'
+  loop_control:
+    label: '{{ item.name }}'
+  notify:
+    - Daemon-reload

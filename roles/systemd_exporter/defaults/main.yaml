@@ -1,0 +1,4 @@
+---
+systemd_exporter_listen_address: 127.0.0.1
+systemd_exporter_listen_port: 9558
+systemd_exporter_image: dockerhub.mirror.servers.com/povilasv/systemd-exporter:v0.4.0

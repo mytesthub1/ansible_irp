@@ -1,0 +1,8 @@
+---
+- name: Deploy resources in kubernetes
+  hosts: all
+  gather_facts: false
+  run_once: true
+  strategy: linear
+  roles:
+    - k8s_app

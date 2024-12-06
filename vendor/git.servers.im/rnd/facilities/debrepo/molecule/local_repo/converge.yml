@@ -1,0 +1,6 @@
+---
+- name: Converge | create repo
+  import_playbook: ../../create_local_repo.yaml
+
+- name: Converge | create repo snapshot
+  import_playbook: ../../create_repo_snapshot.yaml

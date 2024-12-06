@@ -1,0 +1,25 @@
+[Unit]
+Description={{ item.name }}
+ReloadPropagatedFrom=irp-bgp-feed-collector.target
+PartOf=irp-bgp-feed-collector.target
+[Service]
+Type=simple
+WorkingDirectory={{ item.backup_dir }}
+ExecStart=/usr/bin/java \
+            -Dserver.port={{ item.listen_port }} \
+            -Dserver.address={{ item.listen_ip }} \
+            -Dbgp.feed.backup.dir={{ item.backup_dir }} \
+            -Xms{{ item.jvm_mem_min }} -Xmx{{ item.jvm_mem_max }} -XX:+UseG1GC \
+            -DLOG_PATH=/var/log/irp/{{ item.name }} \
+            -Dlogging.config=/etc/irp/{{ item.name }}/logback.xml \
+            -Xlog:gc:file=/var/log/irp/{{ item.name }}/gc.log:time,level,tags:filecount=5,filesize=100m \
+            -jar /usr/lib/irp/bgp-feed-collector.jar
+ProtectSystem=full
+ProtectHome=True
+User={{ irp_user }}
+Group={{ irp_group }}
+PrivateDevices=True
+UMask=022
+LogNamespace=irp
+[Install]
+WantedBy=irp-bgp-feed-collector.target

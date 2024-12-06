@@ -1,0 +1,92 @@
+---
+- name: Install certbot
+  become: true
+  ansible.builtin.apt:
+    name: certbot
+    state: present
+
+- name: Install certbot auth-hook script
+  become: true
+  ansible.builtin.template:
+    src: auth-hook.sh.j2
+    dest: /etc/letsencrypt/auth-hook.sh
+    mode: 0700
+    owner: root
+    group: root
+
+- name: Install certbot cleanup-hook script
+  become: true
+  ansible.builtin.template:
+    src: cleanup-hook.sh.j2
+    dest: /etc/letsencrypt/cleanup-hook.sh
+    mode: 0700
+    owner: root
+    group: root
+
+- name: Modify certbot renew systemd service
+  become: true
+  ansible.builtin.lineinfile:
+    path: /lib/systemd/system/certbot.service
+    regexp: '^ExecStart='
+    line: ExecStart=/usr/bin/certbot renew --reuse-key --post-hook "systemctl reload nginx"
+    mode: 0644
+  notify: Daemon-reload
+
+- name: Delete old let's encrypt certificate
+  become: true
+  ansible.builtin.file:
+    path: /etc/letsencrypt/live/{{ item }}
+    state: absent
+  loop: '{{ letsencrypt_domains }}'
+  when:
+    - ssl_force_renew
+
+- name: Delete old let's encrypt configs
+  become: true
+  ansible.builtin.file:
+    path: /etc/letsencrypt/renewal/{{ item }}.conf
+    state: absent
+  loop: '{{ letsencrypt_domains }}'
+  when:
+    - ssl_force_renew
+
+- name: Delete old let's encrypt archive
+  become: true
+  ansible.builtin.file:
+    path: /etc/letsencrypt/archive/{{ item }}
+    state: absent
+  loop: '{{ letsencrypt_domains }}'
+  when:
+    - ssl_force_renew
+
+- name: Generate let's encrypt certificate
+  become: true
+  ansible.builtin.command:
+    cmd: >-
+      certbot
+        certonly
+          --agree-tos
+          --manual
+          --preferred-challenge=dns
+          --manual-auth-hook=/etc/letsencrypt/auth-hook.sh
+          --manual-cleanup-hook=/etc/letsencrypt/cleanup-hook.sh
+          --register-unsafely-without-email
+          --manual-public-ip-logging-ok
+          -d '{{ item }}'
+          {% if letsencrypt_staging %}--staging{% endif %}
+    creates: /etc/letsencrypt/live/{{ item }}/fullchain.pem
+  loop: '{{ letsencrypt_domains }}'
+
+- name: Enable certbot renew systemd timer
+  become: true
+  ansible.builtin.systemd:
+    name: certbot.timer
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: Generate dhparam.pem file
+  become: true
+  ansible.builtin.command:
+    cmd: openssl dhparam -out /etc/ssl/dhparam.pem 2048
+    creates: /etc/ssl/dhparam.pem

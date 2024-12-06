@@ -1,0 +1,104 @@
+---
+common_monitoring_scraper: "{{ inventory_hostname }}"
+common_monitoring_prometheus_dir: "/etc/scmon/prometheus"
+
+
+alert_roi_exporter_rules:
+  groups:
+    - name: roi_exporter
+      rules:
+        - alert: "roi_exporter: tcp_port is unused"
+          expr: tcp_port == 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            info: !unsafe "roi_exporter: tcp_port {{ $labels.port }} is unused for agent {{ $labels.irp_agent_name }} on {{ $labels.irp_station }}"
+        - alert: "roi_exporter: udp_port is unused"
+          expr: udp_port == 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            info: !unsafe "roi_exporter: udp_port {{ $labels.port }} is unused for agent {{ $labels.irp_agent_name }} on {{ $labels.irp_station }}"
+        - alert: "roi_exporter: service is not running"
+          expr: service_running == 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            info: !unsafe "roi_exporter: service `{{ $labels.name }}` is not running for agent {{ $labels.irp_agent_name }} on {{ $labels.irp_station }}"
+        - alert: "roi_exporter: service is not enabled"
+          expr: service_enabled == 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            info: !unsafe "roi_exporter: service `{{ $labels.name }}` is not enabled for agent {{ $labels.irp_agent_name }} on {{ $labels.irp_station }}"
+
+
+alert_roi_exporter_tests:
+  rule_files:
+    - alert.roi_exporter.rules
+  evaluation_interval: 1m
+  tests:
+    - name: roi_exporter
+      interval: 1m
+      input_series:
+        - series: 'tcp_port{instance="1.2.3.4:8000", irp_agent_name="bgp_push", irp_station="station1", job="roi_exporter", port="0.0.0.0:12345"}'
+          values: "0+0x5"
+        - series: 'udp_port{instance="1.2.3.4:8000", irp_agent_name="bgp_push", irp_station="station1", job="roi_exporter", port="0.0.0.0:12345"}'
+          values: "0+0x5"
+        - series: 'service_running{instance="1.2.3.4:8000", irp_agent_name="bgp_push", irp_station="station1", job="roi_exporter", name="bgp_bush_service"}'
+          values: "0+0x5"
+        - series: 'service_enabled{instance="1.2.3.4:8000", irp_agent_name="bgp_push", irp_station="station1", job="roi_exporter", name="bgp_bush_service"}'
+          values: "0+0x5"
+      alert_rule_test:
+        - eval_time: 5m
+          alertname: "roi_exporter: tcp_port is unused"
+          exp_alerts:
+            - exp_labels:
+                severity: warning
+                instance: 1.2.3.4:8000
+                irp_agent_name: bgp_push
+                irp_station: station1
+                job: roi_exporter
+                port: 0.0.0.0:12345
+              exp_annotations:
+                info: "roi_exporter: tcp_port 0.0.0.0:12345 is unused for agent bgp_push on station1"
+        - eval_time: 5m
+          alertname: "roi_exporter: udp_port is unused"
+          exp_alerts:
+            - exp_labels:
+                severity: warning
+                instance: 1.2.3.4:8000
+                irp_agent_name: bgp_push
+                irp_station: station1
+                job: roi_exporter
+                port: 0.0.0.0:12345
+              exp_annotations:
+                info: "roi_exporter: udp_port 0.0.0.0:12345 is unused for agent bgp_push on station1"
+        - eval_time: 5m
+          alertname: "roi_exporter: service is not running"
+          exp_alerts:
+            - exp_labels:
+                severity: warning
+                instance: 1.2.3.4:8000
+                irp_agent_name: bgp_push
+                irp_station: station1
+                job: roi_exporter
+                name: bgp_bush_service
+              exp_annotations:
+                info: "roi_exporter: service `bgp_bush_service` is not running for agent bgp_push on station1"
+        - eval_time: 5m
+          alertname: "roi_exporter: service is not enabled"
+          exp_alerts:
+            - exp_labels:
+                severity: warning
+                instance: 1.2.3.4:8000
+                irp_agent_name: bgp_push
+                irp_station: station1
+                job: roi_exporter
+                name: bgp_bush_service
+              exp_annotations:
+                info: "roi_exporter: service `bgp_bush_service` is not enabled for agent bgp_push on station1"

@@ -1,0 +1,7 @@
+---
+- name: Reload exa_push
+  become: true
+  ansible.builtin.systemd:
+    name: irp-exa-push.target
+    state: reloaded
+    daemon_reload: true

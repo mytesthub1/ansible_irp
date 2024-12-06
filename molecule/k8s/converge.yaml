@@ -1,0 +1,8 @@
+---
+- import_playbook: ../../_asserts.yaml
+- import_playbook: ../../hosts_prepare.yaml
+- import_playbook: ../../k8s_databases.yaml
+- import_playbook: ../../k8s_deploy.yaml
+- import_playbook: ../../k8s_app.yaml
+- import_playbook: ../resources/playbooks/converge_agents.yaml
+- import_playbook: ../../metrics.yaml

@@ -1,0 +1,13 @@
+---
+- hosts: localhost, all
+  run_once: true
+  gather_facts: false
+  tasks:
+    - name: Check ansible version
+      ansible.builtin.assert:
+        that:
+          - ansible_version.full is version('2.9.6', '>=')
+          - ansible_version.full is version('2.10', '<')
+        msg: 'Use ansible >= 2.9.6 (but less than
+        2.10)'
+      tags: [always]

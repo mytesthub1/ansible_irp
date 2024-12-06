@@ -1,0 +1,16 @@
+---
+- name: Cleanup agents inventory
+  hosts: localhost
+  gather_facts: false
+  vars:
+    inventory_directory: "{{ lookup('env', 'MOLECULE_EPHEMERAL_DIRECTORY') }}/inventory"
+  tasks:
+
+    - name: Cleanup agents inventory
+      ansible.builtin.file:
+        path: '{{ inventory_directory }}/agents.yaml'
+        state: absent
+      changed_when: false
+
+    - name: Refresh inventory
+      ansible.builtin.meta: refresh_inventory

@@ -1,0 +1,18 @@
+---
+- name: Side effect | temporary publishing
+  import_playbook: ../../temporary_publish.yaml
+  vars:
+    temporary_publisher_report_path: 'temp_publish_info.yaml'
+
+- name: Side effect | switch temporary snapshot
+  import_playbook: ../../switch_temp_snapshot.yaml
+
+- name: Side effect | edit exist mirror
+  import_playbook: ../../create_mirror.yaml
+  vars:
+    upstream_ip: "{{ hostvars[groups.aptly_source_repo[0]].ansible_host }}"
+    debrepo_mirror_upstream_key_content: "{{ (lookup('file', 'molecule/default/' + gpg_public_report_path)| from_yaml)['debrepo_gpg_public_key'] }}"
+    debrepo_mirror_upstream_url: "http://{{ upstream_ip }}"
+    gpg_public_report_path: 'gpg_public_key.yaml'
+    debrepo_mirror_filter: "megapackage (>= 1.1)"
+    deprepo_mirror_filter_with_deps: true

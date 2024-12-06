@@ -1,0 +1,624 @@
+---
+production:
+  hosts:
+    nonopt-a1.irp.servers.im:
+      ansible_host: 23.109.105.76
+      ipv4_aliases:
+        - 23.109.87.25
+      ipv4_additional_addresses:
+        - 10.215.2.116
+      provider_data: sc dedicated, AMS2, 57838, R440
+      common_monitoring_dell_hw: true
+      common_monitoring_raid_types: [perc]
+      common_monitoring_interface_public_redundant: true
+      common_monitoring_interface_public_speed: 20000
+      common_monitoring_interface_private_redundant: true
+      common_monitoring_interface_private_speed: 20000
+      common_monitoring_interface_types:
+        - public
+        - private
+    snmp.irp.servers.im:
+      ansible_host: 188.42.219.238
+      ipv4_aliases: []
+      ipv4_additional_addresses:
+        - 10.215.2.246
+      provider_data: sc cloud, az2, bd5403fd-7571-49ed-8f6e-cd89a44278eb
+      common_monitoring_dell_hw: false
+      common_monitoring_interface_public_redundant: false
+      common_monitoring_interface_public_speed: -1  # Unknown! speed on virtio
+      common_monitoring_interface_public_speed_threshold_percent: -100000  # Workaround for Unknown seed
+      common_monitoring_interface_private_redundant: false
+      common_monitoring_interface_private_speed: -1  # Unknown! speed on virtio
+      common_monitoring_interface_private_speed_threshold_percent: -100000  # Workaround for Unknown seed
+      common_monitoring_interface_types:
+        - public
+        - private
+      common_monitoring_interface_private_name: ens7
+      common_monitoring_interface_public_name: ens4
+    agents-xcore-ams1-se-r1.irp.servers.im:
+      ansible_host: 142.91.153.220
+      ipv4_aliases:
+        - 23.111.80.167
+        - 23.111.80.220
+        - 213.196.34.55
+      ipv4_additional_addresses:
+        - 10.215.3.236
+      provider_data: sc dedicated, AMS1, 42934, Dell R220
+      common_monitoring_dell_hw: true
+      common_monitoring_raid_types: [software]
+      common_monitoring_smart: true
+      common_monitoring_interface_public_redundant: true
+      common_monitoring_interface_public_speed: 2000
+      common_monitoring_interface_private_redundant: true
+      common_monitoring_interface_private_speed: 2000
+      common_monitoring_interface_types:
+        - public
+        - private
+    agents-xcore-ams2-se.irp.servers.im:
+      ansible_host: 23.109.94.212
+      provider_data: sc dedicated, AMS2 s1862, Dell R220
+      ipv4_aliases:
+        - 23.109.248.96
+        - 23.109.248.97
+        - 23.109.248.98
+        - 23.109.248.145
+      ipv4_additional_addresses:
+        - 10.215.0.68
+      common_monitoring_dell_hw: true
+      common_monitoring_raid_types: [software]
+      common_monitoring_smart: true
+      common_monitoring_interface_public_redundant: true
+      common_monitoring_interface_public_speed: 2000
+      common_monitoring_interface_private_redundant: true
+      common_monitoring_interface_private_speed: 2000
+      common_monitoring_interface_types:
+        - public
+        - private
+    agents-xcore-ams1-wz-r1.irp.servers.im:
+      ansible_host: 78.140.128.100
+      provider_data: 'WZ, datacenter.com, c2-37-d4539-100 (S/N:46WB5Z1), DELL R210 II'
+      ipv4_aliases:
+        - 78.140.128.104
+        - 78.140.128.105
+        - 78.140.128.106
+        - 78.140.128.107
+        - 78.140.128.109
+        - 78.140.128.114
+      ipv4_additional_addresses: []
+      common_monitoring_dell_hw: true
+      common_monitoring_raid_types: [software]
+      common_monitoring_smart: true
+      common_monitoring_interface_public_redundant: false
+      common_monitoring_interface_types: ['public']
+      common_monitoring_prometheus_remote_alertmanagers_preset:
+        - scheme: http
+          path_prefix: /alertmanager
+          static_configs:
+            - targets:
+                - metrics.irp.servers.im:29080
+        - scheme: https
+          path_prefix: /alertmanager
+          static_configs:
+            - targets:
+                - tv.r.servers.im:29443
+        - scheme: https
+          path_prefix: /
+          static_configs:
+            - targets:
+                - alertmanager.k8s.irp.servers.im
+    agents-jc-r4.irp.servers.im:
+      ansible_host: 199.101.135.18
+      provider_data: 'WZ, TierPoint, c-k180-u1353-18 (S/N:938TYR1), DELL R510'
+      ipv4_aliases:
+        - 199.101.132.35
+        - 199.101.135.22
+        - 199.101.135.21
+        - 199.101.132.34
+        - 199.101.135.20
+        - 199.101.135.19
+        - 199.101.132.36
+        - 199.101.132.37
+      ipv4_additional_addresses: []
+      common_monitoring_dell_hw: true
+      common_monitoring_raid_types: [perc]
+      common_monitoring_perccli_exporter_image: serverscom/perccli-exporter:0.1.4
+      common_monitoring_interface_public_redundant: false
+      common_monitoring_interface_types: ['public']
+      common_monitoring_prometheus_remote_alertmanagers_preset:
+        - scheme: http
+          path_prefix: /alertmanager
+          static_configs:
+            - targets:
+                - metrics.irp.servers.im:29080
+        - scheme: https
+          path_prefix: /alertmanager
+          static_configs:
+            - targets:
+                - tv.r.servers.im:29443
+        - scheme: https
+          path_prefix: /
+          static_configs:
+            - targets:
+                - alertmanager.k8s.irp.servers.im
+    agents-xcore-lu-se.irp.servers.im:
+      ansible_host: 172.255.253.68
+      provider_data: sc dedicated, lux1, Dell R220
+      ipv4_aliases:
+        - 188.42.196.37
+        - 188.42.196.38
+        - 188.42.196.39
+        - 188.42.196.40
+      ipv4_additional_addresses:
+        - 10.215.3.60
+      common_monitoring_dell_hw: true
+      common_monitoring_raid_types: [software]
+      common_monitoring_smart: true
+      common_monitoring_interface_types: ['public', 'private']
+      common_monitoring_interface_public_redundant: true
+      common_monitoring_interface_public_speed: 2000
+      common_monitoring_interface_private_redundant: true
+      common_monitoring_interface_private_speed: 2000
+    epush-a2.irp.servers.im:
+      ansible_host: 188.42.141.132
+      provider_data: sc dedicated, ams1, Dell R540/128Gb
+      ipv4_aliases:
+        - 213.196.34.54
+      ipv4_additional_addresses:
+        - 10.215.1.204
+      common_monitoring_dell_hw: true
+      common_monitoring_raid_types: [software]
+      common_monitoring_smart: true
+      common_monitoring_interface_public_redundant: true
+      common_monitoring_interface_public_speed: 20000
+      common_monitoring_interface_private_redundant: true
+      common_monitoring_interface_private_speed: 20000
+      common_monitoring_interface_types:
+        - public
+        - private
+      common_monitoring_alerts_mem:
+        threshold_percent: 10
+    epush-w2.irp.servers.im:
+      ansible_host: 209.192.172.210
+      provider_data: sc dedicated, was2, Dell R430 E5-2630 v4
+      ipv4_aliases:
+        - 66.242.4.16
+      ipv4_additional_addresses:
+        - 10.215.0.34
+      common_monitoring_dell_hw: true
+      common_monitoring_raid_types: [software]
+      common_monitoring_smart: true
+      common_monitoring_interface_public_redundant: false
+      common_monitoring_interface_public_speed: 10000
+      common_monitoring_interface_private_redundant: false
+      common_monitoring_interface_private_speed: 10000
+      common_monitoring_interface_types:
+        - public
+        - private
+      common_monitoring_alerts_mem:
+        threshold_percent: 10
+    agents-xcore-dfw1-se.irp.servers.im:
+      ansible_host: 64.58.120.68
+      provider_data: sc dedicated, dfw1, Dell R220/32Gb
+      ipv4_aliases:
+        - 173.0.153.153
+        - 173.0.153.154
+        - 173.0.153.155
+        - 173.0.153.156
+        - 173.0.153.157
+        - 173.0.153.158
+      ipv4_additional_addresses:
+        - 10.215.2.164
+      common_monitoring_dell_hw: true
+      common_monitoring_raid_types: [software]
+      common_monitoring_smart: true
+      common_monitoring_interface_types: ['public', 'private']
+      common_monitoring_interface_public_redundant: true
+      common_monitoring_interface_public_speed: 2000
+      common_monitoring_interface_private_redundant: true
+      common_monitoring_interface_private_speed: 2000
+    agents-xcore-dfw2-se.irp.servers.im:
+      ansible_host: 209.192.235.18
+      provider_data: sc dedicated, dfw2, Dell R220/32Gb
+      ipv4_aliases:
+        - 209.205.113.32
+        - 209.205.113.33
+        - 209.205.113.34
+      ipv4_additional_addresses:
+        - 10.215.3.74
+      common_monitoring_dell_hw: true
+      common_monitoring_raid_types: [software]
+      common_monitoring_smart: true
+      common_monitoring_interface_public_redundant: false
+      common_monitoring_interface_public_speed: 1000
+      common_monitoring_interface_private_redundant: false
+      common_monitoring_interface_private_speed: 1000
+      common_monitoring_interface_types:
+        - public
+        - private
+    agents-xcore-dfw3-se.irp.servers.im:
+      ansible_host: 173.237.15.188
+      provider_data: sc dedicated, dfw3, supermicro X11DPL-i Silver 4114
+      ipv4_aliases:
+        - 173.237.16.169
+        - 173.237.16.168
+        - 173.237.16.167
+        - 173.237.16.166
+        - 173.237.16.165
+        - 173.237.16.164
+        - 173.237.16.163
+      ipv4_additional_addresses:
+        - 10.215.2.36
+      common_monitoring_dell_hw: true
+      common_monitoring_raid_types: [software]
+      common_monitoring_smart: true
+      common_monitoring_interface_public_redundant: true
+      common_monitoring_interface_public_speed: 2000
+      common_monitoring_interface_private_redundant: true
+      common_monitoring_interface_private_speed: 2000
+      common_monitoring_interface_types:
+        - public
+        - private
+    agents-xcore-sjc1-se.irp.servers.im:
+      ansible_host: 173.237.51.212
+      provider_data: sc dedicated, SCJ1, Dell R240 - E-2174G, 2 x 16GB DDR4, 2 x 1 TB SATA3 3.5
+      ipv4_aliases:
+        - 173.237.43.32
+        - 173.237.43.33
+        - 173.237.43.34
+        - 173.237.43.35
+        - 173.237.43.36
+      ipv4_additional_addresses:
+        - 10.215.2.100
+      common_monitoring_dell_hw: true
+      common_monitoring_raid_types: [software]
+      common_monitoring_smart: true
+      common_monitoring_interface_public_redundant: true
+      common_monitoring_interface_public_speed: 2000
+      common_monitoring_interface_private_redundant: true
+      common_monitoring_interface_private_speed: 2000
+      common_monitoring_interface_types:
+        - public
+        - private
+    agents-xcore-mo1.irp.servers.im:
+      ansible_host: 23.105.254.228
+      provider_data: sc dedicated, MOW1, R220
+      ipv4_aliases:
+        - 23.111.102.181
+        - 23.111.102.179
+        - 23.111.102.178
+        - 23.111.102.177
+        - 23.111.102.176
+        - 23.111.102.143
+        - 23.111.102.142
+        - 23.111.102.141
+        - 23.111.102.140
+        - 23.111.102.139
+        - 45.133.234.238
+        - 85.8.185.139
+        - 185.184.53.86
+        - 193.32.191.124
+        - 193.47.42.243
+        - 193.47.43.181
+      ipv4_additional_addresses:
+        - 10.215.3.108
+      common_monitoring_dell_hw: true
+      common_monitoring_raid_types: [software]
+      common_monitoring_smart: true
+      common_monitoring_interface_public_redundant: true
+      common_monitoring_interface_public_speed: 2000
+      common_monitoring_interface_private_redundant: true
+      common_monitoring_interface_private_speed: 2000
+      common_monitoring_interface_types:
+        - public
+        - private
+    agents-xcore-ams1-wz-r3r4.irp.servers.im:
+      ansible_host: 188.72.237.34
+      provider_data: 1f2-21-d8848-34.webazilla.com, webzilla, WZ-AMS1, Corridor F, DELL R340/1xE-2276G/32GB(2x16GB PC4-2133 UDIMM)/2x1TB SATA 3.5/H330 PCI/iDRAC/2x350W/Chassis 4x3.5
+      ipv4_aliases:
+        - 188.72.237.35
+        - 188.72.237.36
+        - 188.72.237.37
+        - 188.72.237.38
+        - 188.72.237.39
+        - 188.72.237.40
+      ipv4_additional_addresses: []
+      common_monitoring_dell_hw: true
+      common_monitoring_raid_types: [perc]
+      common_monitoring_raid_perc_bbu: false
+      common_monitoring_interface_public_redundant: true
+      common_monitoring_interface_public_name: bond0
+      common_monitoring_interface_public_speed: 2000
+      common_monitoring_interface_types: ['public']
+      common_monitoring_prometheus_remote_alertmanagers_preset:
+        - scheme: http
+          path_prefix: /alertmanager
+          static_configs:
+            - targets:
+                - metrics.irp.servers.im:29080
+        - scheme: https
+          path_prefix: /alertmanager
+          static_configs:
+            - targets:
+                - tv.r.servers.im:29443
+        - scheme: https
+          path_prefix: /
+          static_configs:
+            - targets:
+                - alertmanager.k8s.irp.servers.im
+    agents-xcore-ams3-se.irp.servers.im:
+      ansible_host: 23.109.81.132
+      provider_data: SC, 56475, Dell R340 - E-2288G - 3.5, 32Gb. 2x1Gbit, 2x480Gb
+      ipv4_aliases:
+        - 23.109.82.128
+        - 23.109.82.129
+        - 23.109.82.130
+        - 23.109.82.131
+        - 23.109.82.132
+      ipv4_additional_addresses:
+        - 10.215.2.52
+      common_monitoring_dell_hw: true
+      common_monitoring_raid_types: [software]
+      common_monitoring_smart: true
+      common_monitoring_interface_public_redundant: true
+      common_monitoring_interface_public_speed: 2000
+      common_monitoring_interface_private_redundant: true
+      common_monitoring_interface_private_speed: 2000
+      common_monitoring_interface_types:
+        - public
+        - private
+    agents-xcore-ams4-se.irp.servers.im:
+      ansible_host: 23.109.169.68
+      provider_data: SC, AMS4, Dell R340 - E-2288G - 3.5
+      ipv4_aliases:
+        - 23.109.170.128
+        - 23.109.170.129
+        - 23.109.170.130
+        - 23.109.170.133
+      ipv4_additional_addresses:
+        - 10.215.2.132
+      common_monitoring_dell_hw: true
+      common_monitoring_raid_types: [software]
+      common_monitoring_smart: true
+      common_monitoring_interface_types: ['public', 'private']
+      common_monitoring_interface_public_redundant: true
+      common_monitoring_interface_public_speed: 2000
+      common_monitoring_interface_private_redundant: true
+      common_monitoring_interface_private_speed: 2000
+    agents-xcore-ams5-se.irp.servers.im:
+      ansible_host: 23.109.13.68
+      provider_data: SC, AMS5, Dell R340 - E-2276G - 3.5, 32GB DDR4, 2 x 300 GB Intel SSD 320 Series
+      ipv4_aliases:
+        - 23.109.14.128
+        - 23.109.14.129
+        - 23.109.14.130
+        - 23.109.14.131
+      ipv4_additional_addresses:
+        - 10.215.1.108
+      common_monitoring_dell_hw: true
+      common_monitoring_raid_types: [software]
+      common_monitoring_smart: true
+      common_monitoring_interface_types: ['public', 'private']
+      common_monitoring_interface_public_redundant: true
+      common_monitoring_interface_public_speed: 2000
+      common_monitoring_interface_private_redundant: true
+      common_monitoring_interface_private_speed: 2000
+    agents-xcore-was1-se.irp.servers.im:
+      ansible_host: 209.192.152.172
+      provider_data: SC, Dell R340 - E-2276G - 3.5, 32Gb. 2x1Gbit, 2x480Gb
+      ipv4_aliases:
+        - 96.46.186.152
+        - 96.46.186.153
+        - 96.46.186.154
+        - 96.46.186.155
+      ipv4_additional_addresses:
+        - 10.215.2.148
+      common_monitoring_dell_hw: true
+      common_monitoring_raid_types: [software]
+      common_monitoring_smart: true
+      common_monitoring_interface_public_redundant: true
+      common_monitoring_interface_public_speed: 2000
+      common_monitoring_interface_private_redundant: true
+      common_monitoring_interface_private_speed: 2000
+      common_monitoring_interface_types:
+        - public
+        - private
+    agents-xcore-was2-se.irp.servers.im:
+      ansible_host: 209.192.164.66
+      provider_data: SC, Dell R240 - E-2174G, 32Gb. 2x1Gbit, 2x480Gb
+      ipv4_aliases:
+        - 173.233.153.32
+        - 173.233.153.33
+        - 173.233.153.34
+        - 173.233.153.35
+        - 173.233.153.36
+      ipv4_additional_addresses:
+        - 10.215.2.90
+      common_monitoring_dell_hw: true
+      common_monitoring_raid_types: [software]
+      common_monitoring_smart: true
+      common_monitoring_interface_public_redundant: false
+      common_monitoring_interface_public_speed: 1000
+      common_monitoring_interface_private_redundant: false
+      common_monitoring_interface_private_speed: 1000
+      common_monitoring_interface_types:
+        - public
+        - private
+    mitigation-eu1.irp.servers.im:
+      ansible_host: 172.255.232.210
+      provider_data: Cloud, AMS1 az4
+      ipv4_aliases: []
+      ipv4_additional_addresses:
+        - 10.215.2.189
+      common_monitoring_dell_hw: false
+      common_monitoring_interface_public_redundant: false
+      common_monitoring_interface_public_speed: 1000
+      common_monitoring_interface_private_redundant: false
+      common_monitoring_interface_private_speed: 1000
+      common_monitoring_interface_types:
+        - public
+        - private
+    mitigation-eu2.irp.servers.im:
+      ansible_host: 142.91.155.145
+      provider_data: Cloud, AMS1 az3
+      ipv4_aliases: []
+      ipv4_additional_addresses:
+        - 10.215.3.85
+      common_monitoring_dell_hw: false
+      common_monitoring_interface_public_redundant: false
+      common_monitoring_interface_public_speed: 1000
+      common_monitoring_interface_private_redundant: false
+      common_monitoring_interface_private_speed: 1000
+      common_monitoring_interface_types:
+        - public
+        - private
+    mitigation-eu3.irp.servers.im:
+      ansible_host: 188.42.219.232
+      provider_data: Cloud, AMS1 az2
+      ipv4_aliases: []
+      ipv4_additional_addresses:
+        - 10.215.2.251
+      common_monitoring_dell_hw: false
+      common_monitoring_interface_public_redundant: false
+      common_monitoring_interface_public_speed: 1000
+      common_monitoring_interface_private_redundant: false
+      common_monitoring_interface_private_speed: 1000
+      common_monitoring_interface_types:
+        - public
+        - private
+    mitigation-us1.irp.servers.im:
+      ansible_host: 173.0.156.171
+      provider_data: Cloud, DFW
+      ipv4_aliases: []
+      ipv4_additional_addresses:
+        - 10.215.3.195
+      common_monitoring_dell_hw: false
+      common_monitoring_interface_public_redundant: false
+      common_monitoring_interface_public_speed: 1000
+      common_monitoring_interface_private_redundant: false
+      common_monitoring_interface_private_speed: 1000
+      common_monitoring_interface_types:
+        - public
+        - private
+    bgp-pull-eu1.irp.servers.im:
+      ansible_host: 188.42.135.76
+      provider_data: SC, AMS1, Dell R340 - E-2276G - 3.5"
+      ipv4_aliases:
+        - 213.196.39.242  # invisible in portal.servers.com, ask @kv for 'how'
+      ipv4_additional_addresses:
+        - 10.215.2.44
+      common_monitoring_dell_hw: true
+      common_monitoring_raid_types: [software]
+      common_monitoring_smart: true
+      common_monitoring_interface_public_redundant: true
+      common_monitoring_interface_public_speed: 2000
+      common_monitoring_interface_private_redundant: true
+      common_monitoring_interface_private_speed: 2000
+      common_monitoring_interface_types:
+        - public
+        - private
+    agents-xcore-sin1.irp.servers.im:
+      ansible_host: 203.195.122.252
+      provider_data: SC, SG1, Dell R330
+      ipv4_aliases:
+        - 188.42.84.143
+        - 188.42.84.147
+        - 188.42.84.148
+        - 188.42.84.149
+        - 188.42.84.150
+        - 188.42.84.151
+        - 188.42.84.152
+        - 188.42.84.153
+      ipv4_additional_addresses:
+        - 10.215.1.236
+      common_monitoring_dell_hw: true
+      common_monitoring_raid_types: [perc]
+      common_monitoring_smart: true
+      common_monitoring_interface_public_redundant: true
+      common_monitoring_interface_public_speed: 2000
+      common_monitoring_interface_private_redundant: true
+      common_monitoring_interface_private_speed: 2000
+      common_monitoring_interface_types:
+        - public
+        - private
+    agents-xcore-hkg1-se.irp.servers.im:
+      ansible_host: 103.70.2.36
+      provider_data: SC, HKG1, Dell R330
+      ipv4_aliases:
+        - 103.70.1.24
+        - 103.70.1.25
+        - 103.70.1.26
+        - 103.70.1.27
+        - 103.70.1.28
+      ipv4_additional_addresses:
+        - 10.215.0.148
+      common_monitoring_dell_hw: true
+      common_monitoring_raid_types: [perc]
+      common_monitoring_smart: true
+      common_monitoring_interface_public_redundant: true
+      common_monitoring_interface_public_speed: 2000
+      common_monitoring_interface_private_redundant: true
+      common_monitoring_interface_private_speed: 2000
+      common_monitoring_interface_types:
+        - public
+        - private
+    agents-chi01-lw.irp.servers.im:
+      ansible_host: 67.225.254.228
+      provider_data: LW chi
+      ipv4_aliases: []
+      common_monitoring_dell_hw: false
+      common_monitoring_interface_public_redundant: false
+      common_monitoring_interface_public_speed: 1000
+      common_monitoring_interface_types:
+        - public
+    agents-ash01-lw.irp.servers.im:
+      ansible_host: 67.225.254.236
+      provider_data: LW ash
+      ipv4_aliases: []
+      common_monitoring_dell_hw: false
+      common_monitoring_interface_public_redundant: false
+      common_monitoring_interface_public_speed: 1000
+      common_monitoring_interface_types:
+        - public
+
+stations:
+  hosts:
+    nonopt-a1.irp.servers.im:
+    snmp.irp.servers.im:
+    agents-xcore-ams1-se-r1.irp.servers.im:
+    agents-xcore-ams2-se.irp.servers.im:
+    agents-xcore-ams1-wz-r1.irp.servers.im:
+    agents-jc-r4.irp.servers.im:
+    agents-xcore-lu-se.irp.servers.im:
+    epush-a2.irp.servers.im:
+    epush-w2.irp.servers.im:
+    agents-xcore-dfw1-se.irp.servers.im:
+    agents-xcore-dfw2-se.irp.servers.im:
+    agents-xcore-dfw3-se.irp.servers.im:
+    agents-xcore-sjc1-se.irp.servers.im:
+    agents-xcore-mo1.irp.servers.im:
+    agents-xcore-ams1-wz-r3r4.irp.servers.im:
+    agents-xcore-ams3-se.irp.servers.im:
+    agents-xcore-ams4-se.irp.servers.im:
+    agents-xcore-ams5-se.irp.servers.im:
+    agents-xcore-was1-se.irp.servers.im:
+    agents-xcore-was2-se.irp.servers.im:
+    mitigation-eu1.irp.servers.im:
+    mitigation-eu2.irp.servers.im:
+    mitigation-eu3.irp.servers.im:
+    mitigation-us1.irp.servers.im:
+    bgp-pull-eu1.irp.servers.im:
+    agents-xcore-sin1.irp.servers.im:
+    agents-xcore-hkg1-se.irp.servers.im:
+    agents-chi01-lw.irp.servers.im:
+    agents-ash01-lw.irp.servers.im:
+
+nonsc_stations.yaml:
+  hosts:
+    agents-xcore-ams1-wz-r1.irp.servers.im:
+    agents-jc-r4.irp.servers.im:
+    agents-xcore-ams1-wz-r3r4.irp.servers.im:
+    agents-chi01-lw.irp.servers.im:
+    agents-ash01-lw.irp.servers.im:
+all:
+  vars:
+    test_var_for_override: defined_in_inventory_file

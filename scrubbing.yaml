@@ -1,0 +1,15 @@
+---
+- name: Configure scrubbing server
+  hosts: scrubbing
+  gather_facts: false
+  roles:
+    - role: scrubbing_netplan
+      tags: netplan
+    - role: scrubbing_sysctl
+      tags: sysctl
+    - role: scrubbing_iptables
+      tags: iptables
+    - role: frr
+      tags: frr
+    - role: irp_ipset_api
+      tags: irp_ipset_api

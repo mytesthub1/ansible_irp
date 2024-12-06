@@ -1,0 +1,151 @@
+---
+- name: Check if all addresses are available
+  ansible.builtin.assert:
+    that:
+      - item.local_address in (ipv4_aliases + [ansible_host] + ansible_all_ipv4_addresses)
+    msg:
+      All used addresses should be in ipv4_aliases/ansbile_host
+  loop: '{{ mitigation | json_query("[].neighbor_list[]") }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Install exabgp
+  become: true
+  ansible.builtin.apt:
+    name: exabgp={{ exa_push_mitigation_version }}
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  notify: Restart all mitigation
+
+- name: Install mitigation-agent
+  become: true
+  ansible.builtin.apt:
+    name: irp-mitigation-agent
+    state: '{{ irp_install_state }}'
+    update_cache: true
+    cache_valid_time: '{{ apt_cache_valid_time }}'
+  notify: Restart all mitigation
+  tags:
+    - irp_update
+
+- name: Create log dir for agent
+  become: true
+  ansible.builtin.file:
+    path: '/var/log/irp/{{ item.name }}/'
+    state: directory
+    owner: '{{ irp_user }}'
+    group: '{{ irp_group }}'
+    mode: 0755
+  loop: '{{ mitigation }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Create exabgp configuration directory
+  become: true
+  ansible.builtin.file:
+    path: '/etc/exabgp/{{ item.name }}/'
+    state: directory
+    owner: '{{ irp_user }}'
+    group: '{{ irp_group }}'
+    mode: 0755
+  loop: '{{ mitigation }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Create exabgp configuration file
+  become: true
+  ansible.builtin.template:
+    src: mitigation.conf.j2
+    dest: /etc/exabgp/{{ item.name }}/exabgp.conf
+    owner: '{{ irp_user }}'
+    group: '{{ irp_group }}'
+    mode: 0644
+  loop: '{{ mitigation }}'
+  loop_control:
+    label: '{{ item.name }}'
+  register: mitigation_exa_conf
+  notify: Restart mitigation
+
+- name: Create exabgp environment file
+  become: true
+  ansible.builtin.template:
+    src: mitigation.env.j2
+    dest: /etc/exabgp/{{ item.name }}/exabgp.env
+    owner: '{{ irp_user }}'
+    group: '{{ irp_group }}'
+    mode: 0644
+  loop: '{{ mitigation }}'
+  loop_control:
+    label: '{{ item.name }}'
+  register: mitigation_exa_env
+  notify: Restart mitigation
+
+- name: Create agent config dir
+  become: true
+  ansible.builtin.file:
+    path: /etc/irp/{{ item.name }}
+    state: directory
+    mode: 0755
+  loop: '{{ mitigation }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Create logback.xml config
+  become: true
+  ansible.builtin.copy:
+    src: logback.xml
+    dest: /etc/irp/{{ item.name }}/logback.xml
+    owner: '{{ irp_user }}'
+    group: '{{ irp_group }}'
+    mode: 0644
+  loop: '{{ mitigation }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Delete agent clickhouse config
+  become: true
+  ansible.builtin.file:
+    path: /etc/irp/{{ item.name }}_clickhouse.properties
+    state: absent
+  loop: '{{ mitigation }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Create systemd services for each instance
+  become: true
+  ansible.builtin.template:
+    src: irp-mitigation.service.j2
+    dest: /etc/systemd/system/irp-mitigation-{{ item.name }}.service
+    mode: 0644
+  loop: '{{ mitigation }}'
+  loop_control:
+    label: '{{ item.name }}'
+  register: mitigation_service
+  notify: Restart mitigation
+
+- name: Enable each service
+  become: true
+  ansible.builtin.systemd:
+    name: irp-mitigation-{{ item.name }}.service
+    enabled: true
+    state: started
+    daemon_reload: true
+  loop: '{{ mitigation }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Create systemd target
+  become: true
+  ansible.builtin.template:
+    src: irp-mitigation.target
+    dest: /etc/systemd/system/irp-mitigation.target
+    mode: 0644
+
+- name: Enable and start target
+  become: true
+  ansible.builtin.systemd:
+    name: irp-mitigation.target
+    state: started
+    enabled: true
+    daemon_reload: true

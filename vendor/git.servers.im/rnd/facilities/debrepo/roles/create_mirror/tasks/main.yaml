@@ -1,0 +1,42 @@
+---
+- name: create mirror | make dir for archives gpg keys
+  become: true
+  become_user: "{{ debrepo_aptly_user }}"
+  ansible.builtin.file:
+    path: "{{ debrepo_archives_gpg_dir }}"
+    state: directory
+    owner: "{{ debrepo_aptly_user }}"
+    group: "{{ debrepo_aptly_user }}"
+    mode: 0755
+
+- name: create mirror | make archive key file
+  become: true
+  become_user: root
+  ansible.builtin.copy:
+    content: |
+      {{ debrepo_mirror_upstream_key_content }}
+    dest: "{{ debrepo_archives_gpg_dir }}/{{ debrepo_mirror_slug }}_public_gpg.key"
+    owner: "{{ debrepo_aptly_user }}"
+    group: "{{ debrepo_aptly_user }}"
+    mode: 0644
+
+- name: create mirror | import archive gpg keys
+  become: true
+  become_user: "{{ debrepo_aptly_user }}"
+  ansible.builtin.command: gpg1 --no-default-keyring --keyring trustedkeys.gpg --import "{{ debrepo_archives_gpg_dir }}/{{ debrepo_mirror_slug }}_public_gpg.key"
+  register: gpg_keys
+  changed_when: "'imported' in gpg_keys.stderr"
+  failed_when:
+    - gpg_keys.rc != 0
+
+- name: create mirror
+  become: true
+  become_user: "{{ debrepo_aptly_user }}"
+  aptly_mirror:
+    state: present
+    name: "{{ debrepo_mirror_slug }}-{{ debrepo_mirror_dist | replace('/', '') }}"
+    archive_url: "{{ debrepo_mirror_upstream_url }}"
+    distribution: "{{ debrepo_mirror_dist }}"
+    components: "{{ debrepo_mirror_components }}"
+    filter: "{{ debrepo_mirror_filter | default(omit) }}"
+    filter_with_deps: "{{ deprepo_mirror_filter_with_deps | default(omit) }}"

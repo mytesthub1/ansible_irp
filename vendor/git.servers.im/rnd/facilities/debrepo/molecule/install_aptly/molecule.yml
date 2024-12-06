@@ -1,0 +1,53 @@
+---
+driver:
+  name: delegated
+platforms:
+  - name: debrepo-mirror_u20_${MOLECULE_SCENARIO_NAME}_${USER}
+    groups:
+      - aptly_server
+    image: 'Ubuntu 20.04-server (64 bit)'
+    flavor: '${OS_FLAVOR:-RND.2-1024-10}'
+    network: '${OS_GPN_NETWORK_NAME}'
+    ssh_user: '${OS_SSH_USER:-cloud-user}'
+    security_groups: '${SECURITY_GROUPS}'
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      host_key_checking: false
+      callback_whitelist: profile_tasks
+    ssh_connection:
+      pipelining: true
+  env:
+    ANSIBLE_ROLES_PATH: "../../roles"
+  inventory:
+    host_vars:
+      debrepo-mirror_u20_${MOLECULE_SCENARIO_NAME}_${USER}:
+        debrepo_aptly_user: aptly
+  playbooks:
+    create: ../resources/playbooks/create.yml
+    destroy: ../resources/playbooks/destroy.yml
+
+verifier:
+  name: testinfra
+  options:
+    sudo: false
+    showlocals: true
+    verbose: true
+
+scenario:
+  create_sequence:
+    - create
+  converge_sequence:
+    - create
+    - prepare
+    - converge
+  destroy_sequence:
+    - destroy
+  test_sequence:
+    - create
+    - prepare
+    - converge
+    - idempotence
+    - verify
+    - destroy

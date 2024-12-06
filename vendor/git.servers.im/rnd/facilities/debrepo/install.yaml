@@ -1,0 +1,15 @@
+---
+- name: aptly | install aptly
+  hosts: aptly_server
+  tags: [install]
+  gather_facts: false
+  become: true
+  roles:
+    - role: aptly_install
+    - role: gpg
+    - role: nginx
+      nginx_sites:
+        - site: 'aptly_web'
+          ansible.builtin.template: nginx_aptly.j2
+
+- import_playbook: setup_api.yaml

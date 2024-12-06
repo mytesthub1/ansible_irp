@@ -1,0 +1,75 @@
+---
+- name: Check iptables rules
+  become: true
+  ansible.builtin.command: iptables-save
+  register: iptables_rules
+  ignore_errors: true
+  changed_when: false
+
+- name: Iptables flush
+  become: true
+  ansible.builtin.shell: |
+    iptables -P INPUT ACCEPT
+    iptables -P FORWARD ACCEPT
+    iptables -P OUTPUT ACCEPT
+    iptables -F
+    iptables -X
+    iptables -t nat -F
+    iptables -t nat -X
+    iptables -t mangle -F
+    iptables -t mangle -X
+    iptables -t raw -F
+    iptables -t raw -X
+  when: iptables_rules.stdout
+  changed_when: true
+
+- name: Remove iptables modules
+  become: true
+  community.general.modprobe:
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - ip6table_nat
+    - ip6table_raw
+    - ip6table_mangle
+    - ip6table_filter
+    - ip6_tables
+    - iptable_nat
+    - iptable_raw
+    - iptable_mangle
+    - ipt_MASQUERADE
+    - iptable_filter
+    - ipt_REJECT
+    - xt_comment
+    - xt_CT
+    - xt_tcpudp
+    - xt_conntrack
+    - ip_tables
+    - x_tables
+
+- name: Uninstall iptables-persistent
+  become: true
+  ansible.builtin.apt:
+    name:
+      - iptables-persistent
+    purge: true
+    state: absent
+
+- name: Blacklist iptables modules
+  become: true
+  ansible.builtin.copy:
+    dest: /etc/modprobe.d/iptables-blacklist.conf
+    content: |
+      blacklist x_tables
+      blacklist iptable_nat
+      blacklist iptable_raw
+      blacklist iptable_mangle
+      blacklist iptable_filter
+      blacklist ip_tables
+      blacklist ipt_MASQUERADE
+      blacklist ip6table_nat
+      blacklist ip6table_raw
+      blacklist ip6table_mangle
+      blacklist ip6table_filter
+      blacklist ip6_tables
+    mode: 0644

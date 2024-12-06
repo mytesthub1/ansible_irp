@@ -1,0 +1,7 @@
+---
+debrepo_aptly_user: aptly
+debrepo_repo_name: 'repo_name'
+debrepo_repo_prefix: 'local'
+debrepo_repo_distribution: 'xenial'
+debrepo_repo_architectures: 'amd64'
+debrepo_local_packages: []

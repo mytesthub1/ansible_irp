@@ -1,0 +1,16 @@
+---
+- name: Install packages
+  become: true
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - clickhouse-backup
+
+- name: Configure for backup
+  ansible.builtin.import_tasks: configure_for_backup.yaml
+  when: not clickhouse_backup_tests
+
+- name: Configure for restore tests
+  ansible.builtin.import_tasks: configure_for_restore_tests.yaml
+  when: clickhouse_backup_tests

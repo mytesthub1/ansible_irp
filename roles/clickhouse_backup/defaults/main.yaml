@@ -1,0 +1,47 @@
+---
+clickhouse_backup_api_url: "{{ ansible_host }}:7171"
+clickhouse_host: '{{ inventory_hostname }}'
+clickhouse_backup_tests: false
+
+clickhouse_backup_config_file:
+  general:
+    disable_progress_bar: false
+    remote_storage: s3
+    log_level: debug
+    download_concurrency: 6
+    upload_concurrency: 6
+    backups_to_keep_local: 1
+    backups_to_keep_remote: 30
+    upload_by_part: true
+    download_by_part: true
+  clickhouse:
+    host: 127.0.0.1
+    port: 9000
+    username: default
+    password: ""
+    secure: false
+    skip_verify: false
+    timeout: 5m
+    freeze_by_part: false
+    ignore_not_exists_error_during_freeze: true
+    skip_tables:
+      - system.*
+      - default.*
+  s3:
+    access_key: '{{ clickhouse_backup_config[clickhouse_host].clickhouse_backup_access_key }}'
+    secret_key: '{{ clickhouse_backup_config[clickhouse_host].clickhouse_backup_secret_key }}'
+    bucket: '{{ clickhouse_backup_config[clickhouse_host].clickhouse_backup_bucket }}'
+    endpoint: '{{ clickhouse_backup_config[clickhouse_host].clickhouse_backup_endpoint }}'
+    acl: private
+    force_path_style: true
+    path: ""
+    disable_ssl: false
+    disable_cert_verification: false
+    # part_size: 104857600  # 100mb
+    max_parts_count: 1000
+    concurrency: 3
+    ansible.builtin.debug: false
+  api:
+    listen: "{{ clickhouse_backup_api_url }}"
+    enable_metrics: true
+    allow_parallel: false

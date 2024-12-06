@@ -1,0 +1,36 @@
+---
+# postgres_image: cr.servers.com/irp/postgresql:15.4-sc3
+postgres_image: ghcr.io/cloudnative-pg/postgresql:15.4
+postgres_instances: 3
+postgres_cluster_name: postgres-cluster
+postgres_external_clusters: "{{ omit }}"
+
+postgres_max_connection: "512"
+postgres_max_locks_per_transaction: "512"
+postgres_effective_io_concurrency: "100"
+
+postgres_storage_class: openebs-hostpath
+postgres_storage_size: 100Gi
+
+postgres_bootstrap_config:
+  initdb:
+    database: "{{ postgres_db_name }}"
+    owner: "{{ postgres_db_username }}"
+    secret:
+      name: postgres-irp-user
+
+postgres_barman_object_store:
+  destinationPath: "s3://{{ postgres_s3_bucket }}/"
+  endpointURL: "{{ postgres_s3_endpoint }}"
+  s3Credentials:
+    accessKeyId:
+      name: backups-s3-creds
+      key: access_key
+    secretAccessKey:
+      name: backups-s3-creds
+      key: secret_key
+
+postgres_k8s_resources:
+  requests:
+    memory: "8Gi"
+    cpu: 8

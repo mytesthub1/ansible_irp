@@ -1,0 +1,72 @@
+---
+driver:
+  name: default
+  options:
+    login_cmd_template: "ssh -l {user} {address} -p {port} -i {identity_file} -o UserKnownHostsFile=/dev/null -o ControlMaster=auto -o ControlPersist=60s -o ForwardX11=no -o LogLevel=ERROR -o StrictHostKeyChecking=no"
+platforms:
+  - name: irp-click-${MOLECULE_SCENARIO_NAME}.${JOB_ID:-$USER}.dev.irp.servers.im
+    groups:
+      - clickhouse
+      - k8s_dev
+    image: "Ubuntu 20.04-server (64 bit)"
+    flavor: "${OS_FLAVOR_8GB:-SSD.120}"
+    private_network: true
+    public_network: true
+    ssh_user: "${OS_SSH_USER:-cloud-user}"
+    security_groups: "${OS_SECURITY_GROUP}"
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      host_key_checking: false
+      callbacks_enabled: profile_tasks
+      stdout_callback: yaml
+      remote_tmp: /tmp/ansible-$USER
+      precedence: all_plugins_inventory, all_plugins_play, groups_plugins_inventory, groups_plugins_play, all_inventory, groups_inventory
+    tags:
+      skip: never, set_to_skip_in_ansible_cfg
+    ssh_connection:
+      pipelining: true
+  inventory:
+    links:
+      group_vars: ../../inventories/group_vars/
+      hosts: ../../inventories/pg_backup_test.yaml
+  ansible_args:
+    - -e job_id=${JOB_ID}
+    - -e nginx_letsencrypt=false
+  playbooks:
+    create: ../resources/playbooks/create.yml
+    destroy: destroy.yaml
+    prepare: prepare.yaml
+    cleanup: ../resources/playbooks/cleanup.yaml
+    converge: converge.yaml
+    side_effect: side_effect.yaml
+
+verifier:
+  name: testinfra
+  options:
+    sudo: false
+    showlocals: true
+    verbose: true
+    color: "yes"
+    ssh-config: ../resources/ssh_config
+
+scenario:
+  create_sequence:
+    - create
+  converge_sequence:
+    - create
+    - prepare
+    - converge
+  destroy_sequence:
+    - cleanup
+    - destroy
+  test_sequence:
+    - create
+    - prepare
+    - converge
+    - verify
+    - side_effect
+    - verify
+    - cleanup
+    - destroy

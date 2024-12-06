@@ -1,0 +1,5 @@
+---
+irp_quality_solver_java_mem: 32G
+irp_quality_solver_local_port: 8083
+irp_install_state: present  # set to 'latest' by update script
+apt_cache_valid_time: 3600

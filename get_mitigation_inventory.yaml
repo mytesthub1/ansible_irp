@@ -1,0 +1,21 @@
+---
+- name: Get inventory for mitigation agents from app
+  hosts: all
+  gather_facts: false
+  run_once: true
+  tasks:
+    - name: Fetch inventory
+      delegate_to: localhost
+      serverscom.irp.get_agents_inventory:
+        inventory_type: MITIGATION
+        irp_api_host: "{{ irp_api_host }}"
+        irp_api_user: "{{ irp_api_user }}"
+        irp_api_password: "{{ irp_api_password }}"
+        ssl_verify: false
+      register: mitigation_inventory_request
+    - name: Save mitigation inventory on controller
+      delegate_to: localhost
+      ansible.builtin.copy:
+        content: '{{ mitigation_inventory_request.inventory }}'
+        dest: 'inventories/inventory-agents-mitigation-{{ tier }}.yaml'
+        mode: 0644

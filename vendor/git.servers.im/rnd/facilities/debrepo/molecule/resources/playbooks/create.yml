@@ -1,0 +1,110 @@
+---
+- name: Check resources
+  import_playbook: resources_check.yml
+
+- name: Create
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    ssh_port: 22
+
+    keypair_name: "keypair-{{ molecule_yml['platforms'][0]['name'] }}"
+    keypair_path: "{{ lookup('env', 'MOLECULE_EPHEMERAL_DIRECTORY') }}/ssh_key"
+    security_groups: "{{ lookup('env', 'SECURITY_GROUPS') }}"
+  tasks:
+    - name: Test for presence of local keypair
+      ansible.builtin.stat:
+        path: "{{ keypair_path }}"
+      register: keypair_local
+
+    - name: Delete remote keypair
+      openstack.cloud.keypair:
+        name: "{{ keypair_name }}"
+        state: absent
+      when: not keypair_local.stat.exists
+
+    - name: Create keypair
+      openstack.cloud.keypair:
+        name: "{{ keypair_name }}"
+      register: keypair
+
+    - name: Persist the keypair
+      ansible.builtin.copy:
+        dest: "{{ keypair_path }}"
+        content: "{{ keypair.key.private_key }}"
+        mode: 0600
+      when: keypair.changed
+
+    - name: Create molecule instance(s)
+      openstack.cloud.server:
+        name: "{{ item.name }}"
+        image: "{{ item.image }}"
+        flavor: "{{ item.flavor }}"
+        key_name: "{{ keypair_name }}"
+        network: "{{ item.network }}"
+        security_groups: "{{ item.security_groups | default(omit, true) }}"
+        floating_ip_pools: "{{ item.fip_pool | default(omit) }}"
+        userdata: |
+          #cloud-config
+          ansible.builtin.apt:
+            preserve_sources_list: false
+            primary:
+              - arches: [default]
+                ansible.builtin.uri: http://mirror.servers.com/ubuntu
+            security:
+              - arches: [default]
+                ansible.builtin.uri: http://mirror.servers.com/ubuntu
+        ansible.builtin.meta:
+          ssh_user: "{{ item.ssh_user }}"
+          ci_project_name: "{{ lookup('env','CI_PROJECT_NAME') }}"
+          ci_job_id: "{{ lookup('env','CI_JOB_ID') }}"
+          ci_commit_sha: "{{ lookup('env','CI_COMMIT_SHA') }}"
+          molecule_scenario: "{{ molecule_yml.scenario.name }}"
+      register: server
+      with_items: "{{ molecule_yml.platforms }}"
+      async: 7200
+      poll: 0
+
+    - name: Wait for instance(s) creation to complete
+      async_status:
+        jid: "{{ item.ansible_job_id }}"
+      register: os_jobs
+      until: os_jobs.finished
+      retries: 300
+      with_items: "{{ server.results }}"
+
+    # Mandatory configuration for Molecule to function.
+
+    - name: Populate instance config dict
+      ansible.builtin.set_fact:
+        instance_conf_dict: {
+          'instance': "{{ item.openstack.name }}",
+          'instance_id': "{{ item.openstack.id }}",
+          'address': "{{ item.openstack.accessIPv4 }}",
+          'user': "{{ item.openstack.metadata.ssh_user }}",
+          'port': "{{ ssh_port }}",
+          'identity_file': "{{ keypair_path }}",
+        }
+      with_items: "{{ os_jobs.results }}"
+      register: instance_config_dict
+      when: server.changed | bool
+
+    - name: Convert instance config dict to a list
+      ansible.builtin.set_fact:
+        instance_conf: "{{ instance_config_dict.results | map(attribute='ansible_facts.instance_conf_dict') | list }}"
+      when: server.changed | bool
+
+    - name: Dump instance config
+      ansible.builtin.copy:
+        content: "{{ instance_conf | to_json | from_json | to_yaml }}"
+        dest: "{{ molecule_instance_config }}"
+      when: server.changed | bool
+
+    - name: Wait for SSH
+      ansible.builtin.wait_for:
+        port: "{{ ssh_port }}"
+        host: "{{ item.address }}"
+        search_regex: SSH
+        delay: 10
+      with_items: "{{ lookup('file', molecule_instance_config) | from_yaml }}"

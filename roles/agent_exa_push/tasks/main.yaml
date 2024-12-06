@@ -1,0 +1,5 @@
+---
+- name: Import prepare.yaml
+  ansible.builtin.import_tasks: prepare.yaml
+- name: Import agents.yaml
+  ansible.builtin.import_tasks: agents.yaml

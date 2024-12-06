@@ -1,0 +1,10 @@
+---
+collections:
+  - name: serverscom.mitogen
+    version: 1.3.6
+  - name: git+ssh://git@git.servers.im/irp/infra/ansible_collection_irp.git
+    version: 1.1.1
+  - name: git+ssh://git@git.servers.im/rnd/facilities/generic.git
+    version: 2.5.12
+  - name: git+ssh://git@git.servers.im/rnd/facilities/common_monitoring_ng.git
+    version: 1.4.1

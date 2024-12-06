@@ -1,0 +1,3 @@
+---
+- import_playbook: ../../k8s_deploy.yaml
+- import_playbook: ../../k8s_app.yaml

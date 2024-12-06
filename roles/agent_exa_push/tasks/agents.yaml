@@ -1,0 +1,119 @@
+---
+- name: Agents | Create configuration directory for exabgp
+  become: true
+  ansible.builtin.file:
+    path: '/etc/exabgp/{{ item.name }}/'
+    state: directory
+    owner: '{{ irp_user }}'
+    group: '{{ irp_group }}'
+    mode: 0755
+  loop: '{{ exa_push }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Agents | Create configuration directory for announce-sender
+  become: true
+  ansible.builtin.file:
+    path: '/etc/irp/{{ item.name }}/'
+    state: directory
+    owner: '{{ irp_user }}'
+    group: '{{ irp_group }}'
+    mode: 0755
+  loop: '{{ exa_push }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Agents | Create log dir for agent
+  become: true
+  ansible.builtin.file:
+    path: '/var/log/irp/{{ item.name }}/'
+    state: directory
+    owner: '{{ irp_user }}'
+    group: '{{ irp_group }}'
+    mode: 0755
+  loop: '{{ exa_push }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Agents | Create data dir for agent
+  become: true
+  ansible.builtin.file:
+    path: '/var/lib/irp/{{ item.name }}/'
+    state: directory
+    owner: '{{ irp_user }}'
+    group: '{{ irp_group }}'
+    mode: 0755
+  loop: '{{ exa_push }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Agents | Create configuration file for agent
+  become: true
+  ansible.builtin.template:
+    src: exa-push.conf.j2
+    dest: /etc/exabgp/{{ item.name }}/exabgp.conf
+    owner: '{{ irp_user }}'
+    group: '{{ irp_group }}'
+    mode: 0644
+  loop: '{{ exa_push }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Agents | Create environment file for exabgp
+  become: true
+  ansible.builtin.template:
+    src: exa-push.env.j2
+    dest: /etc/exabgp/{{ item.name }}/exabgp.env
+    owner: '{{ irp_user }}'
+    group: '{{ irp_group }}'
+    mode: 0644
+  loop: '{{ exa_push }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Agents | Create logback.xml config
+  ansible.builtin.copy:
+    src: logback.xml
+    dest: /etc/irp/{{ item.name }}/logback.xml
+    owner: '{{ irp_user }}'
+    group: '{{ irp_group }}'
+    mode: 0644
+  loop: '{{ exa_push }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Agents | Create systemd services for each instance
+  become: true
+  ansible.builtin.template:
+    src: irp-exa-push.service.j2
+    dest: /etc/systemd/system/{{ item.service_name }}.service
+    mode: 0644
+  loop: '{{ exa_push }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Agents | Enable each service
+  become: true
+  ansible.builtin.systemd:
+    name: '{{ item.service_name }}.service'
+    enabled: true
+    state: started
+    daemon_reload: true
+  loop: '{{ exa_push }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Agents | Create systemd target
+  become: true
+  ansible.builtin.template:
+    src: irp-exa-push.target
+    dest: /etc/systemd/system/irp-exa-push.target
+    mode: 0644
+
+- name: Agents | Enable and start target
+  become: true
+  ansible.builtin.systemd:
+    name: irp-exa-push.target
+    state: started
+    enabled: true
+    daemon_reload: true

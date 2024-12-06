@@ -1,0 +1,4 @@
+---
+- import_playbook: ../resources/playbooks/dns_update.yaml
+- import_playbook: ../../_asserts.yaml
+- import_playbook: ../../hosts_prepare.yaml

@@ -1,0 +1,6 @@
+---
+- name: Install and configure roi-exporter
+  hosts: stations
+  gather_facts: false
+  roles:
+    - roi_exporter

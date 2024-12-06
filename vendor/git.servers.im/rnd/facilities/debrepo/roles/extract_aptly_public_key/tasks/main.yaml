@@ -1,0 +1,23 @@
+---
+- name: extract aptly public key
+  become: true
+  become_user: '{{ debrepo_aptly_user }}'
+  ansible.builtin.command:
+    cmd: gpg1 --armor --export "{{ gpg_key_name }}"
+  register: cmd_gpg_pub_key
+  changed_when: false
+
+- name: Check that gpg_key exist
+  ansible.builtin.assert:
+    that:
+      - cmd_gpg_pub_key.stdout != ""
+    msg: "gpg key with name {{ gpg_key_name }} not exist"
+
+- name: Generate gpg report
+  become: false
+  delegate_to: localhost
+  ansible.builtin.copy:
+    dest: '{{ gpg_public_report_path }}'
+    content: '{{ {"debrepo_gpg_public_key": cmd_gpg_pub_key.stdout}|to_nice_yaml }}'
+    mode: 0644
+  when: gpg_public_report_path is defined

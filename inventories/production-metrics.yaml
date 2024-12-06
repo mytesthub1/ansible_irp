@@ -1,0 +1,31 @@
+---
+production:
+  hosts:
+    metrics.irp.servers.im:
+      ansible_host: 172.255.232.211
+      ipv4_additional_addresses:
+        - 10.215.2.184
+      common_monitoring_dell_hw: false
+      common_monitoring_interface_public_redundant: false
+      common_monitoring_interface_private_redundant: false
+      common_monitoring_prometheus_remote_alertmanagers_preset:
+        - scheme: https
+          path_prefix: /alertmanager
+          static_configs:
+            - targets:
+                - tv.r.servers.im:29443
+      common_monitoring_nginx_acl: '{{ mgmt_access_ips + [ansible_host] + all_irp_ips + k8s_ips }}'
+      generic_apt_repos: []
+      common_monitoring_slack_url: 'https://hooks.slack.com/services/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'
+      common_monitoring_blackbox_exporter_targets:
+        - target: https://irp.servers.im
+          module: http_200
+
+
+metrics:
+  hosts:
+    metrics.irp.servers.im:
+
+all:
+  vars:
+    test_var_for_override: defined_in_inventory_file

@@ -1,0 +1,12 @@
+---
+- name: Setup clickhouse backup
+  hosts: clickhouse_backup
+  gather_facts: false
+  roles:
+    - clickhouse_backup
+
+- name: Setup clickhouse backup trigger
+  hosts: clickhouse_backup
+  gather_facts: false
+  roles:
+    - clickhouse_backup_trigger

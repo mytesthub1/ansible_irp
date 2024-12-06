@@ -1,0 +1,39 @@
+
+process add_route {
+    run /usr/bin/java -Dpart-size={{ item.part_size }} -Dbase-url=http://{{ item.bgp_feed_collector_ip }}:{{ item.bgp_feed_collector_port }}/ -DLOG_PATH=/var/log/irp/{{ item.name }} -Dlogging.config=/etc/irp/{{ item.name }}/logback.xml "-Xlog:gc:file=/var/log/irp/{{ item.name }}/gc.log:time,level,tags:filecount=5,filesize=100m" -jar /usr/lib/irp/announce-processor.jar;
+    encoder text;
+}
+
+template {
+    neighbor DEFAULT {
+        router-id {{ item.router_id }};
+        local-address {{ item.bgp_source_ip }};
+        api {
+            processes [ add_route ];
+            neighbor-changes;
+            receive {
+                parsed;
+                update;
+            }
+        }
+        adj-rib-in False;
+        adj-rib-out False;
+        family {
+            ipv4 unicast;
+        }
+    }
+}
+
+{% for neighbor in item.neighbor_list %}
+# {{ neighbor.name }}
+neighbor {{ neighbor.neighbor_ip }} {
+    inherit DEFAULT;
+    hold-time {{ neighbor.hold_time }};
+    local-as {{ neighbor.local_as }};
+    peer-as {{neighbor.peer_as }};
+{% if neighbor['md_password']|d(None, true) != None  %}
+    md5-password {{neighbor.md_password }};
+{% endif %}
+}
+{% endfor %}
+

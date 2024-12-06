@@ -1,0 +1,29 @@
+---
+- name: Install nginx
+  become: true
+  ansible.builtin.apt: name=nginx state=present
+  notify: Restart nginx
+
+- name: Removing default
+  become: true
+  ansible.builtin.file: path=/etc/nginx/sites-enabled/default state=absent
+  notify: Reload nginx
+
+- name: Configure sites
+  become: true
+  ansible.builtin.template:
+    src: '{{ item.template }}'
+    dest: /etc/nginx/sites-available/{{ item.site }}.conf
+    mode: 0644
+  notify: Reload nginx
+  loop: '{{ nginx_sites }}'
+
+- name: Enable site
+  become: true
+  ansible.builtin.file:
+    state: link
+    src: /etc/nginx/sites-available/{{ item.site }}.conf
+    dest: /etc/nginx/sites-enabled/{{ item.site }}.conf
+    mode: 0644
+  notify: Reload nginx
+  loop: '{{ nginx_sites }}'

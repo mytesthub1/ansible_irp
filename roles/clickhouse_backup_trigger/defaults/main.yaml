@@ -1,0 +1,5 @@
+---
+clickhouse_backup_schedule: "*-*-* 02:10:00"
+clickhouse_backup_api_url: "{{ ansible_host }}:7171"
+clickhouse_backup_prefix: "{{ ansible_host }}"
+clickhouse_backup_full_period_days: 1

@@ -1,0 +1,4 @@
+---
+ssl_force_renew: false
+letsencrypt_staging: false
+ddns_server: nsmaster.mgm.servers.com

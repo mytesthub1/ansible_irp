@@ -1,0 +1,32 @@
+
+process add_route {
+    run /usr/bin/java -Dserver.address={{ item.listen_ip }} -Dserver.port={{ item.listen_port }} -XX:+UseG1GC -Xms{{ item.jvm_mem_min }} -Xmx{{ item.jvm_mem_max }} -DLOG_PATH=/var/log/irp/{{ item.name }} -Dlogging.config=/etc/irp/{{ item.name }}/logback.xml -XX:+UseStringDeduplication "-Xlog:gc*:/var/log/irp/{{ item.name }}/gc.log::filecount=5,filesize=100m" -Drouter.id={{ item.router_id }} -Drouter.name={{ item.router_name }} -Dneighbor.ip={{ item.neighbor.neighbor_ip }} -jar /usr/lib/irp/mitigation-agent.jar;
+    encoder text;
+}
+
+neighbor {{ item.neighbor.neighbor_ip }} {
+    # {{ item.neighbor.name }} for {{ item.name }}
+    router-id {{ item.neighbor.router_id }};
+    local-address {{ item.neighbor.local_address }};
+    local-as {{ item.neighbor.local_as }};
+    peer-as {{ item.neighbor.peer_as }};
+    hold-time {{ item.neighbor.hold_time }};
+    adj-rib-out False;
+    group-updates false;
+    api {
+        processes [ add_route ];
+        neighbor-changes;
+        receive {
+            parsed;
+            update;
+        }
+    }
+
+    capability {
+        graceful-restart;
+    }
+    family {
+        ipv4 flow;
+        ipv4 unicast;
+    }
+}

@@ -1,0 +1,15 @@
+[Unit]
+Description=IRP Internal Monitoring Agent
+ReloadPropagatedFrom=imgod.target
+PartOf=imgod.target
+[Service]
+Type=simple
+ExecStart=/usr/bin/im-god --api-listen={{ item.listen_ip }}:{{ item.listen_port }} --listen-port={{ item.probe_listen_port }}
+CapabilityBoundingSet=CAP_NET_RAW
+ProtectSystem=true
+ProtectHome=true
+RestartSec=5s
+Restart=on-failure
+LogNamespace=irp
+[Install]
+WantedBy=imgod.target

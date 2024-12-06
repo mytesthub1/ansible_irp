@@ -1,0 +1,7 @@
+---
+- name: Restart roi-exporter
+  become: true
+  ansible.builtin.systemd:
+    name: roi-exporter
+    daemon-reload: true
+    state: restarted

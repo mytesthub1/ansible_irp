@@ -1,0 +1,17 @@
+---
+- import_playbook: _asserts.yaml
+  tags:
+    - always
+
+- name: Configure infra hosts firewall
+  hosts: aptly_server,ntp
+  gather_facts: false
+  vars:
+    irp_allow_hosts: '{{ groups.all|unique|d([]) }}'
+    http_access_ips:
+      - name: IRP-Test account
+        cidr: 10.82.150.0/23
+      - name: apt.dev.irp.servers.im
+        cidr: 188.42.62.11/32
+  roles:
+    - irp_firewall

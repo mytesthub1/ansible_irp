@@ -1,0 +1,91 @@
+---
+- name: Agent-bgp-feed-collector | Install collector
+  become: true
+  ansible.builtin.apt:
+    name: irp-bgp-feed-collector
+    state: '{{ irp_install_state }}'
+    update_cache: true
+    cache_valid_time: '{{ apt_cache_valid_time }}'
+  notify:
+    - Restart bgp-feed-collector
+  tags:
+    - irp_update
+
+- name: Agent-bgp-feed-collector | Create backup directory
+  become: true
+  ansible.builtin.file:
+    path: '{{ item.backup_dir }}'
+    owner: '{{ irp_user }}'
+    group: '{{ irp_group }}'
+    state: directory
+    mode: 0755
+  loop: '{{ bgp_feed_collector }}'
+
+- name: Agent-bgp-feed-collector | Create config directory
+  become: true
+  ansible.builtin.file:
+    path: '/etc/irp/{{ item.name }}'
+    owner: '{{ irp_user }}'
+    group: '{{ irp_group }}'
+    state: directory
+    mode: 0755
+  loop: '{{ bgp_feed_collector }}'
+
+- name: Agent-bgp-feed-collector | Create log directory
+  become: true
+  ansible.builtin.file:
+    path: '/var/log/irp/{{ item.name }}'
+    owner: '{{ irp_user }}'
+    group: '{{ irp_group }}'
+    state: directory
+    mode: 0755
+  loop: '{{ bgp_feed_collector }}'
+
+- name: Agent-bgp-feed-collector | Create logback.xml
+  become: true
+  ansible.builtin.copy:
+    src: logback.xml
+    dest: /etc/irp/{{ item.name }}/logback.xml
+    mode: 0644
+  loop: '{{ bgp_feed_collector }}'
+  loop_control:
+    label: '{{ item.name }}'
+  notify:
+    - Restart bgp-feed-collector
+
+- name: Agent-bgp-feed-collector | Create systemd target
+  become: true
+  ansible.builtin.template:
+    src: irp-bgp-feed-collector.target
+    dest: /etc/systemd/system/irp-bgp-feed-collector.target
+    mode: 0644
+
+- name: Agent-bgp-feed-collector | Create systemd services for each instance
+  become: true
+  ansible.builtin.template:
+    src: irp-bgp-feed-collector.service.j2
+    dest: /etc/systemd/system/{{ item.service_name }}.service
+    mode: 0644
+  loop: '{{ bgp_feed_collector }}'
+  loop_control:
+    label: '{{ item.name }}'
+  notify:
+    - Restart bgp-feed-collector
+
+- name: Agent-bgp-feed-collector | Enable each service
+  become: true
+  ansible.builtin.systemd:
+    name: '{{ item.service_name }}.service'
+    enabled: true
+    daemon_reload: true
+  loop: '{{ bgp_feed_collector }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Agent-bgp-feed-collector | Enable and start target
+  become: true
+  ansible.builtin.systemd:
+    name: irp-bgp-feed-collector.target
+    state: started
+    enabled: true
+    daemon_reload: true

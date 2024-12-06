@@ -1,0 +1,36 @@
+[api]
+enabled = true
+address = "0.0.0.0:8686"
+
+[sources.journald]
+type = "journald"
+remap_priority = true
+since_now = true
+
+[sources.journald_irp]
+type = "journald"
+remap_priority = true
+journal_directory = "/var/log/journal/{{ ansible_machine_id }}.irp"
+since_now = true
+
+{# [sinks.console]
+inputs = ["journald"]
+target = "stdout"
+type = "console"
+encoding.codec = "json" #}
+
+[sinks.loki]
+type = "loki"
+inputs = ["journald", "journald_irp"]
+endpoint = "{{ loki_endpoint }}"
+compression = "none"
+encoding.codec = "text"
+labels.job = "systemd-journald"
+{% raw %}
+labels.hostname = "{{ host }}"
+labels.source_type = "{{ source_type }}"
+labels.level = "{{ PRIORITY }}"
+labels.syslog_identifier = "{{ SYSLOG_IDENTIFIER }}"
+labels.syslog_facility = "{{ SYSLOG_FACILITY }}"
+labels.unit = "{{ _SYSTEMD_UNIT }}"
+{% endraw %}

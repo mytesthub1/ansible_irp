@@ -1,0 +1,64 @@
+#!/usr/sbin/nft -f
+
+flush ruleset
+
+table ip raw {
+  chain prerouting {
+    type filter hook prerouting priority raw;
+    {% if firewall.disable_icmp_tracking|d(False) %}
+    ip protocol icmp notrack
+    {% endif %}
+    {% if firewall.disable_udp_tracking|d(False) %}
+    ip protocol udp notrack
+    {% endif %}
+  }
+  chain output {
+    type filter hook output priority raw;
+    {% if firewall.disable_icmp_tracking|d(False) %}
+    ip protocol icmp notrack
+    {% endif %}
+    {% if firewall.disable_udp_tracking|d(False) %}
+    ip protocol udp notrack
+    {% endif %}
+  }
+}
+
+table inet filter {
+
+  chain input {
+    type filter hook input priority filter; policy drop;
+    ct state {established, related} accept
+    ct state invalid drop
+    iifname lo accept
+    ip protocol icmp accept
+
+    # Permit everything fromt rusted
+    {% for rule in firewall.trusted|d(mgmt_access_list) %}
+    ip saddr {{ rule.cidr }} accept comment "{{ rule.name }}"
+    {% endfor %}
+
+    # Permit everything from IRP Central
+    {% for rule in firewall.self|d([]) %}
+    ip saddr {{ rule.cidr }} accept comment "{{ rule.name }}"
+    {% endfor %}
+
+    # Permit incoming UDP on specific port for agents
+    {% for rule in firewall.agents_incoming_udp|d([]) %}
+    ip saddr {{ rule.cidr }} udp dport {{ rule.destination_port | replace(":", "-") }} accept comment "{{ rule.name }}"
+    {% endfor %}
+
+    # Permit incoming TCP on specific port for agents
+    {% for rule in firewall.agents_incoming_tcp|d([]) %}
+    ip saddr {{ rule.cidr }} tcp dport {{ rule.destination_port | replace(":", "-") }} accept comment "{{ rule.name }}"
+    {% endfor %}
+
+  }
+
+  chain forward {
+    type filter hook forward priority 0; policy drop;
+  }
+
+  chain output {
+    type filter hook output priority 0;
+  }
+}

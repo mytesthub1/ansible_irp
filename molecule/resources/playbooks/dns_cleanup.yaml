@@ -1,0 +1,24 @@
+---
+- name: Cleanup dns
+  hosts: all
+  gather_facts: false
+  vars:
+    key_algorithm: "{{ ddns_key.split(':')[0] }}"
+    key_name: "{{ ddns_key.split(':')[1].split()[0] }}"
+    key_secret: "{{ ddns_key.split()[1] }}"
+    ddns_server: nsmaster.mgm.servers.com
+  tasks:
+    - name: Clean hosts dns entry  # noqa: args[module]
+      delegate_to: localhost
+      community.general.nsupdate:
+        key_algorithm: "{{ key_algorithm }}"
+        key_name: "{{ key_name }}"
+        key_secret: "{{ key_secret }}"
+        server: '{{ lookup("dig", ddns_server) }}'
+        record: '{{ inventory_hostname.split("." + irp_dns_zone)[0] }}'
+        zone: '{{ irp_dns_zone }}'
+        value: "{{ ansible_host }}"
+        type: A
+        state: absent
+      when: (ddns_key)
+      failed_when: false

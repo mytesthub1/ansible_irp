@@ -1,0 +1,10 @@
+---
+- name: Create databases in k8s
+  hosts: all
+  run_once: true
+  gather_facts: false
+  strategy: linear
+  roles:
+    - k8s_namespace
+    - k8s_cnpg
+    - k8s_postgres_cluster

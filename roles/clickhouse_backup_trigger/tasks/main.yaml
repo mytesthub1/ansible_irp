@@ -1,0 +1,31 @@
+---
+- name: Copy clickhouse-backup-trigger.py
+  become: true
+  ansible.builtin.copy:
+    src: clickhouse-backup-trigger.py
+    dest: /usr/local/bin/clickhouse-backup-trigger.py
+    mode: 0755
+
+- name: Create clickhouse-backup-trigger.service
+  become: true
+  ansible.builtin.template:
+    src: clickhouse-backup-trigger.service.j2
+    dest: /lib/systemd/system/clickhouse-backup-trigger.service
+    mode: 0644
+  notify: Daemon-reload
+
+- name: Create clickhouse-backup-trigger.timer
+  become: true
+  ansible.builtin.template:
+    src: clickhouse-backup-trigger.timer.j2
+    dest: /lib/systemd/system/clickhouse-backup-trigger.timer
+    mode: 0644
+  notify: Daemon-reload
+
+- name: Start and enable clickhouse-backup-trigger.timer
+  become: true
+  ansible.builtin.systemd:
+    name: clickhouse-backup-trigger.timer
+    enabled: true
+    state: started
+    daemon-reload: true

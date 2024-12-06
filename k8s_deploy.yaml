@@ -1,0 +1,20 @@
+---
+- name: Deploy resources in kubernetes
+  hosts: all
+  gather_facts: false
+  strategy: linear
+  run_once: true
+  roles:
+    - role: k8s_irp_configs
+      tags: k8s_configs
+    - role: k8s_irp_role
+    - role: k8s_irp_ingress
+      tags: k8s_irp_ingress
+    - role: k8s_namespace
+    - role: k8s_monitoring
+      tags: monitoring
+    - role: k8s_alertmanager_config
+      when: slack_webhook_url is defined
+    - role: k8s_loki_irp_ingress
+      when: loki_fqdn is defined
+      tags: loki

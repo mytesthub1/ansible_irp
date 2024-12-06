@@ -1,0 +1,151 @@
+---
+- name: Agent-exa-pull | Check if all addresses are available
+  ansible.builtin.assert:
+    that:
+      - item.bgp_source_ip in (ipv4_aliases + [ansible_host] + ansible_all_ipv4_addresses)
+    msg:
+      'All used addresses should be in ipv4_aliases/ansbile_host'
+  loop: '{{ exa_pull }}'
+
+- name: Agent-exa-pull | Install exabgp
+  become: true
+  ansible.builtin.apt:
+    name: exabgp={{ exa_pull_version }}
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  notify:
+    - Restart exa_pull
+
+- name: Agent-exa-pull | Install announce-processor
+  become: true
+  ansible.builtin.apt:
+    name: irp-announce-processor
+    state: '{{ irp_install_state }}'
+    update_cache: true
+    cache_valid_time: '{{ apt_cache_valid_time }}'
+  notify:
+    - Restart exa_pull
+  tags:
+    - irp_update
+
+- name: Agent-exa-pull | Create exabgp log directory
+  become: true
+  ansible.builtin.file:
+    path: '/var/log/exabgp/{{ item.name }}/'
+    state: directory
+    owner: '{{ irp_user }}'
+    group: '{{ irp_group }}'
+    mode: 0755
+  loop: '{{ exa_pull }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Agent-exa-pull | Create announce-processor log directory
+  become: true
+  ansible.builtin.file:
+    path: '/var/log/irp/{{ item.name }}/'
+    state: directory
+    owner: '{{ irp_user }}'
+    group: '{{ irp_group }}'
+    mode: 0755
+  loop: '{{ exa_pull }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Agent-exa-pull | Create announce-processor config directory
+  become: true
+  ansible.builtin.file:
+    path: '/etc/irp/{{ item.name }}/'
+    state: directory
+    owner: '{{ irp_user }}'
+    group: '{{ irp_group }}'
+    mode: 0755
+  loop: '{{ exa_pull }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Agent-exa-pull | Create logback.xml
+  become: true
+  ansible.builtin.copy:
+    src: logback.xml
+    dest: /etc/irp/{{ item.name }}/logback.xml
+    mode: 0644
+  loop: '{{ exa_pull }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Agent-exa-pull | Create configuration directory
+  become: true
+  ansible.builtin.file:
+    path: '/etc/exabgp/{{ item.name }}/'
+    state: directory
+    owner: '{{ irp_user }}'
+    group: '{{ irp_group }}'
+    mode: 0755
+  loop: '{{ exa_pull }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Agent-exa-pull | Create configuration file
+  become: true
+  ansible.builtin.template:
+    src: exa-pull.conf.j2
+    dest: /etc/exabgp/{{ item.name }}/exabgp.conf
+    owner: '{{ irp_user }}'
+    group: '{{ irp_group }}'
+    mode: 0644
+  loop: '{{ exa_pull }}'
+  loop_control:
+    label: '{{ item.name }}'
+  notify: Reload exa_pull
+
+- name: Agent-exa-pull | Create environment file
+  become: true
+  ansible.builtin.template:
+    src: exa-pull.env.j2
+    dest: /etc/exabgp/{{ item.name }}/exabgp.env
+    owner: '{{ irp_user }}'
+    group: '{{ irp_group }}'
+    mode: 0644
+  loop: '{{ exa_pull }}'
+  loop_control:
+    label: '{{ item.name }}'
+  notify: Reload exa_pull
+
+- name: Agent-exa-pull | Create systemd services for each instance
+  become: true
+  ansible.builtin.template:
+    src: irp-exa-pull.service.j2
+    dest: /etc/systemd/system/{{ item.service_name }}.service
+    mode: 0644
+  loop: '{{ exa_pull }}'
+  loop_control:
+    label: '{{ item.name }}'
+  notify: Reload exa_pull
+
+- name: Agent-exa-pull | Enable each service
+  become: true
+  ansible.builtin.systemd:
+    name: '{{ item.service_name }}.service'
+    enabled: true
+    state: started
+    daemon_reload: true
+  loop: '{{ exa_pull }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Agent-exa-pull | Create systemd target
+  become: true
+  ansible.builtin.template:
+    src: irp-exa-pull.target
+    dest: /etc/systemd/system/irp-exa-pull.target
+    mode: 0644
+
+- name: Agent-exa-pull | Enable and start target
+  become: true
+  ansible.builtin.systemd:
+    name: irp-exa-pull.target
+    state: started
+    enabled: true
+    daemon_reload: true

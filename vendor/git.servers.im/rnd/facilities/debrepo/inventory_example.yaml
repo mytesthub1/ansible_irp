@@ -1,0 +1,31 @@
+---
+aptly_server:
+  hosts:
+    mirror.example.com:
+      # Upstream debian archive info
+      # Using for any mirror monipulation
+      debrepo_aptly_user: aptly
+      debrepo_mirror_upstream_key_content: <gpg_key_content>
+      debrepo_mirror_upstream_url: 'http://debian.org'
+      debrepo_mirror_slug: mirror_name
+      debrepo_mirror_dist: xenial
+      deprepo_mirror_update_policy: deadline  # optional
+      debrepo_mirror_update_deadline: "2020-01-31 00:00"  # optional
+      # mirror package filtering
+      debrepo_mirror_filter: megapackage (>= 1.1)  # optional, required if deprepo_mirror_filter_with_deps define
+      deprepo_mirror_filter_with_deps: true  # optional
+      # nginx
+      debrepo_publish_host: "{{ ansible_host }}" # optional
+
+    local_repo.example.com:
+      # create local repo with publish
+      # using for local repo
+      debrepo_aptly_user: aptly
+      debrepo_repo_name: 'repo_name'
+      debrepo_repo_prefix: 'local'
+      debrepo_repo_architectures: ['amd64']
+      debrepo_repo_dist: xenial
+
+aptly_repo_server:
+  hosts:
+    local_repo.example.com:

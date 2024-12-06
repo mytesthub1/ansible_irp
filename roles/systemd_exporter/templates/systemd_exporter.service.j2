@@ -1,0 +1,29 @@
+# {{ ansible_managed }}
+[Unit]
+Description=systemd exporter
+After=docker.service
+
+[Service]
+ExecStartPre=-/usr/bin/docker rm -f systemd_exporter
+ExecStartPre=/usr/bin/docker create --name=systemd_exporter \
+  --privileged \
+  -v /proc:/host/proc \
+  -v /run/systemd:/run/systemd \
+  -v /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket:ro \
+  --name systemd_exporter \
+  --net=host \
+  {{ systemd_exporter_image }} \
+  --web.listen-address="{{ systemd_exporter_listen_address }}:{{ systemd_exporter_listen_port }}" \
+  --path.procfs=/host/proc \
+  --collector.unit-whitelist="irp-rest.service|irp-ui-api.service"
+ExecStart=/usr/bin/docker start -a -i systemd_exporter
+ExecStop=-/usr/bin/docker stop systemd_exporter
+ExecReload=-/usr/bin/docker kill --signal=HUP systemd_exporter
+SuccessExitStatus=2
+Restart=always
+RestartSec=10s
+TimeoutStartSec=120
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target

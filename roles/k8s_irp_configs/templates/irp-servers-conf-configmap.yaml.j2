@@ -1,0 +1,21 @@
+#jinja2: lstrip_blocks: "True", trim_blocks: "True"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: irp-servers.conf
+  labels:
+    app: irp
+data:
+  servers.conf: |
+    {% for host in station_access_list %}
+    - name: {{ host }}
+      ip: {{ hostvars[host].ansible_host }}
+    {% for ip in hostvars[host].ipv4_additional_addresses | d([]) %}
+    - name: {{ host }}
+      ip: {{ ip }}
+    {% endfor %}
+    {% endfor %}
+{% filter indent(width=4) %}
+    {{ kubernetes_nodes | to_nice_yaml(indent=2) }}
+{% endfilter %}

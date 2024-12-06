@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# This script is deactivating RND developing environment
+# Existed instances which has been created with molecule
+# will be destroyed
+
+# Script uses current user username (`whoami`) to run
+# user-specific script from rnd/user_scripts directory
+# to load credentials to connect to OpenStack.
+# rnd/user_scripts/* is in .gitignore.
+
+# This script should run as `source rnd/deactivate`
+
+if test -f rnd/user_scripts/"$USER"; then
+  echo "including rnd/user_scripts/$USER"
+  source "rnd/user_scripts/${USER}"
+else
+  echo "rnd/user_scripts/$USER not found"
+fi
+
+scenarios_with_created_vms=$(molecule list -f plain | grep "irp_node.*$USER" | awk '$5 == "true" {print $4}' | sort| uniq)
+if [ -n "$scenarios_with_created_vms" ]; then
+  echo -e "Running VMs for scenarios: \n$scenarios_with_created_vms\n"
+  for scenario in $scenarios_with_created_vms; do
+    echo "Destroying inventory for $scenario..."
+    molecule destroy -s "$scenario"
+  done
+else
+    echo "There are no VMs to destroy"
+fi
+
+echo -e "\nCleanup cache:"
+for scenario in ~/.cache/molecule/"$(basename "$PWD")"/*/; do
+  molecule reset -s "$(basename "$scenario")"
+done
+
+
+unset OS_AUTH_URL
+unset OS_TENANT_NAME
+unset OS_PASSWORD
+unset OS_USERNAME
+unset OS_IDENTITY_VERSION
+unset OS_DEFAULT_DOMAIN_NAME
+unset OS_KEY_NAME
+unset OS_PUBLIC_NETWORK_UUID
+unset OS_FLAVOR
+unset OS_GPN_NETWORK_NAME
+
+deactivate
+
+echo "Deactivated. Use rnd/activate to restore."
+

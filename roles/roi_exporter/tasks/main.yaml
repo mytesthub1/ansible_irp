@@ -1,0 +1,24 @@
+---
+- name: Install roi-exorter
+  become: true
+  ansible.builtin.apt:
+    name: roi-exporter
+    state: '{{ irp_install_state }}'
+    update_cache: true
+    cache_valid_time: '{{ apt_cache_valid_time }}'
+
+- name: Create roi-exporter systemd service
+  become: true
+  ansible.builtin.template:
+    src: roi-exporter.service.j2
+    dest: /lib/systemd/system/roi-exporter.service
+    mode: 0644
+  notify: Restart roi-exporter
+
+- name: Start and enable roi-exporter
+  become: true
+  ansible.builtin.systemd:
+    name: roi-exporter
+    daemon-reload: true
+    state: started
+    enabled: true

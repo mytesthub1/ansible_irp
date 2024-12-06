@@ -1,0 +1,17 @@
+---
+- name: Create restore tests configs directory
+  become: true
+  ansible.builtin.file:
+    path: /etc/clickhouse-backup/restore
+    state: directory
+    mode: 0755
+
+- name: Create clickhouse-backup restore configs
+  become: true
+  ansible.builtin.copy:
+    content: '{{ clickhouse_backup_config_file | to_nice_yaml }}'
+    dest: /etc/clickhouse-backup/restore/{{ clickhouse_host }}.yml
+    mode: 0644
+  loop: '{{ clickhouse_backup_config.keys() }}'
+  loop_control:
+    loop_var: clickhouse_host

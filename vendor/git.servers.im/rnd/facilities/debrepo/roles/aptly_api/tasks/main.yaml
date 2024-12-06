@@ -1,0 +1,16 @@
+---
+- name: Create aptly-api systemd unit
+  become: true
+  ansible.builtin.template:
+    src: aptly-api.service.j2
+    dest: /lib/systemd/system/aptly-api.service
+    mode: 0644
+  notify: aptly-api restart
+
+- name: Enable and start aptly-api.service
+  become: true
+  ansible.builtin.systemd:
+    name: aptly-api
+    enabled: true
+    state: started
+    daemon-reload: true

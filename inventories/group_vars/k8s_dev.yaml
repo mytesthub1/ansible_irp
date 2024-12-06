@@ -1,0 +1,93 @@
+---
+tier: dev
+
+irp_apt_repo_host: apt.dev.irp.servers.im
+irp_taco_repo: '{{ irp_proposed_repo }}'
+
+flow_storage_clickhouse:
+  - hosts:
+      - 23.83.115.132
+      - 188.42.108.212
+    db: flows
+    user: irp
+    password: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          64643266366661663564333531623334613630613039656632366562353637653063306264663134
+          3236636137653330626232646239366363616161383933380a333135623737616262346530363736
+          62376263636463643534323033626638656166313731316130343661336635643234333265363166
+          3735323764636133380a663036356366623933613731363431636639323265616339373363633830
+          61366234666464663937653963616464353665356633616665663137383537363261
+
+irp_api_user: initial@webzilla.com
+irp_api_password: iez8reetech3Ahja
+irp_provisioned_users:
+  - email: "{{ irp_api_user }}"
+    # python3 -c 'import bcrypt; print(bcrypt.hashpw(b"password", bcrypt.gensalt()).decode("ascii"))'
+    password: $2b$12$k/zuf2lWk1Gmcfmzk6Wm/.ZH/2yKInF1/gY6f01QsCQxU.T9p3zTO  # password: iez8reetech3Ahja
+    role: ADMIN
+
+irp_allow_notifications: false
+
+frontend_fqdn: ui.{{ job_id }}.kube.irp.servers.im
+irp_api_host: https://{{ frontend_fqdn }}
+ipv4_additional_addresses: []
+ipv4_aliases: []
+provider_data: ""
+account_gp_network: 10.82.150.0/23
+
+kubernetes_namespace: irp-dev-{{ job_id }}
+kubernetes_context: irp-staging
+
+kubernetes_nodes:
+  - name: worker1-private
+    ip: 10.82.151.170
+  - name: worker1-public
+    ip: 23.109.136.130
+  - name: worker2-private
+    ip: 10.82.150.82
+  - name: worker2-public
+    ip: 23.109.136.134
+  - name: worker3-private
+    ip: 10.82.150.250
+  - name: worker3-public
+    ip: 23.109.136.198
+  - name: worker4-private
+    ip: 10.82.150.122
+  - name: worker4-public
+    ip: 23.109.136.174
+
+mgmt_access_list_additional:
+  - name: irp-test account
+    cidr: 10.82.150.0/23
+
+irp_image_tag: "{{ lookup('env', 'IRP_IMAGE_TAG') | d('dev', true) }}"
+
+
+redis_password: lBZqiBJa8thMwP0mlwHta2hsEUjwVRHCi6BlSPe8vt22/8lVtw5b9PBfP0DZZkw/YakrJU8kaPm0olM
+
+postgres_k8s: true
+clickhouse_k8s: true
+
+clickhouse_central_dbs:
+  - name: rtt
+    host: clickhouse
+    user: irp_rtt
+    password: gre2sypsuvOch_
+    networks: '{{ clickhouse_allowed_networks }}'
+  - name: archive
+    host: clickhouse
+    user: irp_archive
+    password: pivthep6@Gree
+    networks: '{{ clickhouse_allowed_networks }}'
+  - name: live_rtt
+    host: clickhouse
+    user: irp_live_rtt
+    password: Ne{tie4mahP0oof-
+    networks: '{{ clickhouse_allowed_networks }}'
+  - name: quality_solver_rtt
+    host: clickhouse
+    user: irp_quality_solver_rtt
+    password: heiediyae.SaiY0J
+    networks: '{{ clickhouse_allowed_networks }}'
+
+k8s_cluster_issuer: pebble-issuer

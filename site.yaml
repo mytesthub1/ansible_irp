@@ -1,0 +1,4 @@
+---
+- import_playbook: hosts_prepare.yaml
+- import_playbook: central.yaml
+- import_playbook: metrics.yaml

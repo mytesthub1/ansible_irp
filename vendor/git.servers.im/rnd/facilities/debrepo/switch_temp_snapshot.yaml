@@ -1,0 +1,25 @@
+---
+- name: Switch snapshot to main publish
+  hosts: aptly_server
+  tags: [switch_snapshot]
+  gather_facts: false
+  become: true
+  become_user: "{{ debrepo_aptly_user | d('aptly') }}"
+  tasks:
+    - name: Collect facts
+      setup:
+        gather_subset:
+          - '!all'
+
+    - name: switch snapshot
+      aptly_publish_snapshot:
+        state: switched
+        prefix: "{{ debrepo_mirror_slug }}"
+        snapshot_name: "snapshot-{{ debrepo_mirror_slug }}-{{ debrepo_mirror_dist }}-{{ ansible_date_time.date }}"
+        distribution: "{{ debrepo_mirror_dist }}"
+
+    - name: drop temp publish
+      aptly_publish_snapshot:
+        state: absent
+        prefix: "temp/{{ debrepo_mirror_slug }}"
+        distribution: "{{ debrepo_mirror_dist }}"

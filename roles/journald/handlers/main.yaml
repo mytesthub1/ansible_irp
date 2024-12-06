@@ -1,0 +1,9 @@
+---
+
+- name: Restart journald-irp
+  become: true
+  ansible.builtin.systemd:
+    name: systemd-journald@irp.service
+    enabled: true
+    state: restarted
+    daemon_reload: true

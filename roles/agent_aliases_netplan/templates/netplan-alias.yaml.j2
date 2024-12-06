@@ -1,0 +1,11 @@
+---
+network:
+  {{ interface_types_map[interface_type] }}:
+    {{ ansible_default_ipv4.interface }}:
+{% if 'dynamic' in interfaces_info %}
+      dhcp4: true
+{% endif %}
+      addresses:
+{% for ip in ipv4_aliases %}
+        - {{ ip|ipaddr }}/32
+{% endfor %}

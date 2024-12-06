@@ -1,0 +1,11 @@
+server {
+  server_name {{ inventory_hostname }};
+  listen 80 default_server;
+  location / {
+    root /var/www/aptly/public;
+  }
+  location /je8jk49EWJ_K9fkW.kW {
+    alias /var/www/aptly/public;
+    autoindex on;
+  }
+}

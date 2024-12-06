@@ -1,0 +1,22 @@
+---
+- name: Install nftables
+  become: true
+  ansible.builtin.apt:
+    name: nftables
+    state: present
+
+- name: Configure nftables
+  become: true
+  ansible.builtin.template:
+    src: nftables.conf.j2
+    dest: /etc/nftables.conf
+    lstrip_blocks: true
+    mode: 0644
+  notify: Restart nftables
+
+- name: Start and enable nftables
+  become: true
+  ansible.builtin.systemd:
+    name: nftables
+    state: started
+    enabled: true

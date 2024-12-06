@@ -1,0 +1,137 @@
+---
+- name: Create agents via irp-rest API
+  hosts: all
+  run_once: true
+  gather_facts: false
+  vars:
+    station: '{{ groups.stations[0] }}'
+    station_ip: '{{ hostvars[station].ansible_host }}'
+  tasks:
+    - name: Create firewall
+      serverscom.irp.agents_firewall_trusted:
+        trusted_ips: "{{ mgmt_access_list }}"
+        irp_api_host: "{{ irp_api_host }}"
+        irp_api_user: "{{ irp_api_user }}"
+        irp_api_password: "{{ irp_api_password }}"
+        ssl_verify: false
+      # loop: '{{ mgmt_access_list }}'
+      delegate_to: localhost
+
+    - name: Create location
+      serverscom.irp.location:
+        name: CI_LOCATION
+        irp_api_host: "{{ irp_api_host }}"
+        irp_api_user: "{{ irp_api_user }}"
+        irp_api_password: "{{ irp_api_password }}"
+        ssl_verify: false
+      tags: location
+      delegate_to: localhost
+
+    - name: Create carrier
+      serverscom.irp.carrier:
+        name: CI_CARRIER
+        asn: 3356
+        next_hop: 172.31.225.56
+        irp_api_host: "{{ irp_api_host }}"
+        irp_api_user: "{{ irp_api_user }}"
+        irp_api_password: "{{ irp_api_password }}"
+        ssl_verify: false
+      tags: carrier
+      delegate_to: localhost
+
+    - name: Create router
+      serverscom.irp.router:
+        name: ci_router
+        type: Juniper
+        vendor: JUNIPER
+        # location_id: 1
+        location_name: CI_LOCATION
+        irp_api_host: "{{ irp_api_host }}"
+        irp_api_user: "{{ irp_api_user }}"
+        irp_api_password: "{{ irp_api_password }}"
+        ssl_verify: false
+      tags: router
+      delegate_to: localhost
+
+    - name: Create location members
+      serverscom.irp.location_members:
+        location_name: CI_LOCATION
+        carrier_name: CI_CARRIER
+        router_names:
+          - ci_router
+        irp_api_host: "{{ irp_api_host }}"
+        irp_api_user: "{{ irp_api_user }}"
+        irp_api_password: "{{ irp_api_password }}"
+        ssl_verify: false
+      tags: members
+      delegate_to: localhost
+
+    - name: Create agent_snmp_collector
+      serverscom.irp.agent_snmp_collector:
+        station_name: '{{ station }}'
+        irp_api_host: "{{ irp_api_host }}"
+        irp_api_user: "{{ irp_api_user }}"
+        irp_api_password: "{{ irp_api_password }}"
+        ssl_verify: false
+      tags: snmp
+      delegate_to: localhost
+
+    - name: Create agent_rtt
+      serverscom.irp.agent_rtt:
+        station_name: '{{ station }}'
+        location_name: CI_LOCATION
+        carrier_name: CI_CARRIER
+        source_ip: '{{ station_ip }}'
+        irp_api_host: "{{ irp_api_host }}"
+        irp_api_user: "{{ irp_api_user }}"
+        irp_api_password: "{{ irp_api_password }}"
+        ssl_verify: false
+      tags: rtt
+      delegate_to: localhost
+
+    - name: Create agent_bgp_push
+      serverscom.irp.agent_bgp_push:
+        station_name: '{{ station }}'
+        router_name: ci_router
+        neighbor_ip: 192.1.1.1
+        local_as: 64514
+        peer_as: 64514
+        hold_time: 1800
+        bgp_router_id: '{{ station_ip }}'
+        bgp_source_ip: '{{ station_ip }}'
+        irp_api_host: "{{ irp_api_host }}"
+        irp_api_user: "{{ irp_api_user }}"
+        irp_api_password: "{{ irp_api_password }}"
+        ssl_verify: false
+      tags: bgp_push
+      delegate_to: localhost
+
+    - name: Create agent_bgp_pull
+      serverscom.irp.agent_bgp_pull:
+        station_name: '{{ station }}'
+        bgp_router_id: '{{ station_ip }}'
+        bgp_source_ip: '{{ station_ip }}'
+        irp_api_host: "{{ irp_api_host }}"
+        irp_api_user: "{{ irp_api_user }}"
+        irp_api_password: "{{ irp_api_password }}"
+        ssl_verify: false
+      tags: bgp_pull
+      delegate_to: localhost
+
+    - name: Create agent_mitigation
+      serverscom.irp.agent_mitigation:
+        station_name: '{{ station }}'
+        router_name: ci_router
+        location_name: CI_LOCATION
+        neighbor_ip: 1.1.1.1
+        local_as: 64514
+        peer_as: 64514
+        hold_time: 180
+        bgp_router_id: '{{ station_ip }}'
+        bgp_source_ip: '{{ station_ip }}'
+        irp_api_host: "{{ irp_api_host }}"
+        irp_api_user: "{{ irp_api_user }}"
+        irp_api_password: "{{ irp_api_password }}"
+        ssl_verify: false
+      tags: mitigation
+      delegate_to: localhost

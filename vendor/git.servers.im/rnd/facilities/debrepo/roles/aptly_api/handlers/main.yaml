@@ -1,0 +1,8 @@
+---
+- name: aptly-api restart
+  become: true
+  ansible.builtin.systemd:
+    name: aptly-api
+    enabled: true
+    state: restarted
+    daemon-reload: true

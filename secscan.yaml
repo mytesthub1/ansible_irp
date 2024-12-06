@@ -1,0 +1,39 @@
+---
+- name: Add hosts to secscan
+  hosts: secscan
+  gather_facts: false
+  tasks:
+    - name: Create scan_exporter config
+      become: true
+      vars:
+        all_hosts: '{{ groups.all | difference(groups.secscan) }}'
+      ansible.builtin.copy:
+        content: |
+          {% for host in all_hosts %}
+          {% if not hostvars[host].ansible_host | ansible.utils.reduce_on_network("10.0.0.0/8") %}
+          - name: {{ hostvars[host].inventory_hostname }}
+            ip: "{{ hostvars[host].ansible_host }}"
+            tcp:
+              range: "all"
+          {% endif %}
+          {% for ip in (hostvars[host].ipv4_additional_addresses | d([]) + hostvars[host].ipv4_aliases | d([])) %}
+          {% if not ip | ansible.utils.reduce_on_network("10.0.0.0/8") %}
+          - name: {{ hostvars[host].inventory_hostname }}
+            ip: "{{ ip }}"
+            tcp:
+              range: "all"
+          {% endif %}
+          {% endfor %}
+          {% endfor %}
+        dest: /etc/scan_exporter/target_irp.yaml
+        mode: 0644
+      notify: Restart scan_exporter
+
+  handlers:
+    - name: Restart scan_exporter
+      become: true
+      ansible.builtin.systemd:
+        name: scan_exporter
+        state: restarted
+        enabled: true
+        daemon_reload: true

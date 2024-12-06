@@ -1,0 +1,61 @@
+---
+- name: Install clickhouse
+  become: true
+  ansible.builtin.apt:
+    name:
+      - clickhouse-server
+      - clickhouse-client
+    state: '{{ irp_install_state }}'
+    update_cache: true
+    cache_valid_time: '{{ apt_cache_valid_time }}'
+  notify: Restart clickhouse
+
+- name: Create config
+  become: true
+  ansible.builtin.template:
+    src: config.xml.j2
+    dest: /etc/clickhouse-server/config.xml
+    mode: 0644
+    owner: clickhouse
+    group: clickhouse
+  notify:
+    - Restart clickhouse
+
+- name: Create users
+  become: true
+  ansible.builtin.template:
+    src: users.xml.j2
+    dest: /etc/clickhouse-server/users.xml
+    mode: 0600
+    owner: clickhouse
+    group: clickhouse
+  notify:
+    - Restart clickhouse
+
+- name: Start and enable clickhouse
+  become: true
+  ansible.builtin.systemd:
+    name: clickhouse-server
+    state: started
+    enabled: true
+
+- name: Check clickhouse server is ready
+  ansible.builtin.command: clickhouse-client -h 127.0.0.1 -q 'select 1'
+  changed_when: false
+  retries: 10
+  delay: 5
+  register: clickhouse_result
+  until: clickhouse_result.rc == 0
+
+- name: Get existing databases
+  ansible.builtin.command: clickhouse-client -h 127.0.0.1 -q 'show databases'
+  changed_when: false
+  register: existing_databases
+  tags: db
+
+- name: Create databases
+  ansible.builtin.command: clickhouse-client -h 127.0.0.1 -q 'CREATE DATABASE IF NOT EXISTS `{{ item.name }}`'
+  loop: '{{ clickhouse_dbs }}'
+  when: item.name not in existing_databases.stdout_lines
+  tags: db
+  changed_when: true

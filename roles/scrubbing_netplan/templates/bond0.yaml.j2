@@ -1,0 +1,27 @@
+network:
+  ethernets:
+{% for iface in net.cars_100G_bond.members %}
+    {{ iface}}: {}
+{% endfor %}
+  bonds:
+    bond0:
+      mtu: 9216
+      dhcp4: false
+      dhcp6: false
+      interfaces:
+{% for iface in net.cars_100G_bond.members %}
+        - {{ iface}}
+{% endfor %}
+      parameters:
+        mode: 802.3ad
+        lacp-rate: long
+        mii-monitor-interval: 100
+  vlans:
+{% for vlan in net.cars_100G_bond.vlans %}
+    # {{ vlan.name }}
+    bond0.{{ vlan.id }}:
+      id: {{ vlan.id }}
+      link: bond0
+      addresses:
+        - {{ vlan.address }}
+{% endfor %}

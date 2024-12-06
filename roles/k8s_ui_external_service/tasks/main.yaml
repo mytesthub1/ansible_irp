@@ -1,0 +1,86 @@
+---
+- name: Create namespace
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        labels:
+          kubernetes.io/metadata.name: "{{ kubernetes_namespace }}"
+        name: "{{ kubernetes_namespace }}"
+
+- name: Create app-ui Endpoint
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    namespace: "{{ kubernetes_namespace }}"
+    definition:
+      apiVersion: v1
+      kind: Endpoints
+      metadata:
+        name: irp-ui-api
+        labels:
+          kubernetes.io/service-name: irp-ui-api
+      subsets:
+        - addresses:
+            - ip: 23.109.161.20
+          ports:
+            - port: 80
+
+- name: Create app-ui service
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    namespace: "{{ kubernetes_namespace }}"
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: irp-ui-api
+      spec:
+        # type: ExternalName
+        # externalName: "{{ frontend_fqdn }}"
+        ports:
+          - protocol: TCP
+            targetPort: 80
+            port: 80
+
+- name: Create app-ui ingress
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    namespace: "{{ kubernetes_namespace }}"
+    definition:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        annotations:
+          cert-manager.io/cluster-issuer: letsencrypt-production
+          nginx.ingress.kubernetes.io/whitelist-source-range: "{{ mgmt_access_ips | join(', ') }}"
+        labels:
+          app.kubernetes.io/instance: irp-ui-api
+          app.kubernetes.io/name: irp-ui-api
+        name: irp-ui-api
+      spec:
+        ingressClassName: nginx
+        rules:
+          - host: k8s-ui.irp.servers.im
+            http:
+              paths:
+                - backend:
+                    service:
+                      name: irp-ui-api
+                      port:
+                        number: 80
+                  path: /api
+                  pathType: Prefix
+        tls:
+          - hosts:
+              - k8s-ui.irp.servers.im
+            secretName: k8s-ui.irp.servers.im-tls

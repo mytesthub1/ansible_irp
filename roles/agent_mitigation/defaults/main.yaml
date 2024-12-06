@@ -1,0 +1,4 @@
+---
+irp_install_state: present  # set to 'latest' by update script
+exa_mitigation_version: "4.*"
+apt_cache_valid_time: 3600

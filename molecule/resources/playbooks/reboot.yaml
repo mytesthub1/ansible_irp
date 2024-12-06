@@ -1,0 +1,17 @@
+---
+- name: Reboot all hosts
+  hosts: all
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Reboot host
+      ansible.builtin.reboot:
+
+    - name: Wait for host
+      ansible.builtin.wait_for_connection:
+        delay: 10
+        timeout: 300
+
+    - name: Let services to start in 1min
+      ansible.builtin.pause:
+        minutes: 1

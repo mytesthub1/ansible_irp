@@ -1,0 +1,6 @@
+---
+- name: Restart netfilter-persistent
+  become: true
+  ansible.builtin.systemd:
+    name: netfilter-persistent
+    state: restarted

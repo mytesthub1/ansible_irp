@@ -1,0 +1,25 @@
+---
+- name: Setup clickhouse backup
+  hosts: clickhouse
+  gather_facts: false
+  roles:
+    - role: clickhouse_backup
+      clickhouse_backup_tests: true
+
+  tasks:
+    - name: Get latest backup
+      ansible.builtin.command: clickhouse-backup --config /etc/clickhouse-backup/restore/{{ clickhouse_host }}.yml list remote latest
+      environment:
+        LOG_LEVEL: error
+      register: latest_backups
+      changed_when: false
+      loop: "{{ clickhouse_backup_config.keys() }}"
+      loop_control:
+        loop_var: clickhouse_host
+
+    - name: Restore clickhouse backup
+      become: true
+      become_user: clickhouse
+      ansible.builtin.command: clickhouse-backup --config /etc/clickhouse-backup/restore/{{ item.clickhouse_host }}.yml restore_remote --rm {{ item.stdout_lines[-1] }}
+      changed_when: true
+      loop: "{{ latest_backups.results }}"

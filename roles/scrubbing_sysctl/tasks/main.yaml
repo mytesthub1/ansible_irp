@@ -1,0 +1,38 @@
+---
+- name: Set global sysctl options
+  become: true
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_set: true
+    reload: true
+  loop:
+    - name: net.ipv4.conf.default.rp_filter
+      value: 0
+    - name: net.ipv4.conf.all.rp_filter
+      value: 0
+    - name: net.ipv4.ip_forward
+      value: 1
+
+- name: Set interfaces sysctl options
+  become: true
+  ansible.posix.sysctl:
+    name: "net.ipv4.neigh.{{ item }}.gc_stale_time"
+    value: "{{ iface_gc_stale_time }}"
+    state: present
+    sysctl_set: true
+    reload: true
+  loop:
+    - "{{ net.dcspine.iface }}"
+    - "{{ net.webzilla.iface }}"
+
+- name: Set vlans sysctl options
+  become: true
+  ansible.posix.sysctl:
+    name: "net.ipv4.neigh.{{ net.cars_100G_bond.iface }}/{{ item.id }}.gc_stale_time"
+    value: "{{ iface_gc_stale_time }}"
+    state: present
+    sysctl_set: true
+    reload: true
+  loop: "{{ net.cars_100G_bond.vlans }}"

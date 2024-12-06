@@ -1,0 +1,21 @@
+# This is an example of user-specific script for rnd/activate
+# it's activated based on user name. If this script
+# has name 'example', then it's run for user 'example'
+# (user 'joe' will have rnd/user_scripts/joe)
+
+# all those scripts (except for example) are in .gitignore
+
+# We need:
+# 1. The usual OS_* credentials
+#    (go to your provider, click show credentials)
+# 2. GPN Network ID
+# 3. (optional) flavor if it isn't specified, SSD.30 is used.
+
+export OS_AUTH_URL=https://auth.servers.was1.cloud.servers.com:5000/v3/
+export OS_PASSWORD=1
+export OS_USERNAME=2
+export OS_IDENTITY_VERSION=3
+export OS_DEFAULT_DOMAIN_NAME=default
+
+export OS_GPN_NETWORK_NAME=global_private
+export OS_FLAVOR=SSD.30

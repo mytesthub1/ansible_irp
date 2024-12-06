@@ -1,0 +1,34 @@
+---
+- name: Create mirror
+  aptly_mirror:
+    state: present
+    name: mirror_name
+    archive_url: http://fpt.ru.debian.org/debian/
+    distribution: squeeze
+    components: ['main']
+    ignore_signatures: bool
+    # todo:
+    # with-sources
+    # filter
+    # architectures
+
+- name: Delete mirror
+  aptly_mirror:
+    state: absent
+    name: mirror_name
+    drop_dependency: true
+    force: false
+
+- name: Create snapshot
+  aptly_snapshot:
+    state: present
+    name: snap_name
+    mirror_name: mirror_name
+
+- name: Publishing snapshot
+  aptly_publish_snapshot:
+    state: present
+    name: publish_name
+    distribution: ceph-octopus
+    architectures: ['amd64']
+    components: ['main']

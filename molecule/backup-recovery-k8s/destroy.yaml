@@ -1,0 +1,17 @@
+---
+- name: Destroy test namespace
+  hosts: all
+  gather_facts: false
+  run_once: true
+  tasks:
+    - name: Delete test namespace
+      delegate_to: localhost
+      kubernetes.core.k8s:
+        state: absent
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: "{{ kubernetes_namespace }}"
+
+- import_playbook: ../resources/playbooks/destroy.yml

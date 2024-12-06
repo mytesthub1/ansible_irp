@@ -1,0 +1,113 @@
+---
+- name: Stop bgp-feed-collector
+  become: true
+  ansible.builtin.systemd:
+    name: '{{ item.service_name }}'
+    state: stopped
+    enabled: false
+  loop: '{{ absent_bgp_feed_collector }}'
+  loop_control:
+    label: '{{ item.name }}'
+  register: service_stop
+  failed_when:
+    - service_stop.failed
+    - ("Could not find the requested" not in service_stop.msg)
+
+- name: Stop exabgp
+  become: true
+  ansible.builtin.systemd:
+    name: '{{ item.service_name }}'
+    state: stopped
+    enabled: false
+  loop: '{{ absent_exa_pull }}'
+  loop_control:
+    label: '{{ item.name }}'
+  register: service_stop
+  failed_when:
+    - service_stop.failed
+    - ("Could not find the requested" not in service_stop.msg)
+
+- name: Remove bgp-feed-collector config directory
+  become: true
+  ansible.builtin.file:
+    path: /etc/irp/{{ item.name }}
+    state: absent
+  loop: '{{ absent_bgp_feed_collector }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Remove bgp-feed-collector log directory
+  become: true
+  ansible.builtin.file:
+    path: /var/log/irp/{{ item.name }}
+    state: absent
+  loop: '{{ absent_bgp_feed_collector }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Remove bgp-feed-collector backup directory
+  become: true
+  ansible.builtin.file:
+    path: /var/lib/irp/{{ item.name }}
+    state: absent
+  loop: '{{ absent_bgp_feed_collector }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Remove exabgp directory
+  become: true
+  ansible.builtin.file:
+    path: /etc/exabgp/{{ item.name }}/
+    state: absent
+  loop: '{{ absent_exa_pull }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Remove exabgp log directory
+  become: true
+  ansible.builtin.file:
+    path: /var/log/exabgp/{{ item.name }}/
+    state: absent
+  loop: '{{ absent_exa_pull }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Remove announce-processor config directory
+  become: true
+  ansible.builtin.file:
+    path: /etc/irp/{{ item.name }}
+    state: absent
+  loop: '{{ absent_exa_pull }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Remove announce-processor log directory
+  become: true
+  ansible.builtin.file:
+    path: /var/log/irp/{{ item.name }}
+    state: absent
+  loop: '{{ absent_exa_pull }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Delete systemd services for bgp-feed-collector
+  become: true
+  ansible.builtin.file:
+    path: /etc/systemd/system/{{ item.service_name }}.service
+    state: absent
+  loop: '{{ absent_bgp_feed_collector }}'
+  loop_control:
+    label: '{{ item.name }}'
+  notify:
+    - Daemon-reload
+
+- name: Delete systemd services for announce-processor
+  become: true
+  ansible.builtin.file:
+    path: /etc/systemd/system/{{ item.service_name }}.service
+    state: absent
+  loop: '{{ absent_exa_pull }}'
+  loop_control:
+    label: '{{ item.name }}'
+  notify:
+    - Daemon-reload

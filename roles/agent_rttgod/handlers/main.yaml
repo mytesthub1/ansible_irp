@@ -1,0 +1,16 @@
+---
+- name: Restart rttgod
+  become: true
+  ansible.builtin.systemd:
+    name: rttgod.target
+    state: restarted
+    enabled: true
+    daemon_reload: true
+
+- name: Restart irp-network-utils
+  become: true
+  ansible.builtin.systemd:
+    name: irp-network-utils
+    state: restarted
+    enabled: true
+    daemon_reload: true

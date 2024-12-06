@@ -1,0 +1,20 @@
+---
+- name: Disable proxy side
+  become: true
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/{{ item.name }}.conf
+    state: absent
+  loop: '{{ absent_nginx_proxy }}'
+  loop_control:
+    label: '{{ item.name }}'
+  notify: Reload nginx
+
+- name: Remove proxy side
+  become: true
+  ansible.builtin.file:
+    path: /etc/nginx/sites-available/{{ item.name }}.conf
+    state: absent
+  loop: '{{ absent_nginx_proxy }}'
+  loop_control:
+    label: '{{ item.name }}'
+  notify: Reload nginx

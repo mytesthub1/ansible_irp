@@ -1,0 +1,46 @@
+---
+- name: Agent-bgp-push | Install exabgp
+  become: true
+  ansible.builtin.apt:
+    name: exabgp={{ exa_push_mitigation_version }}
+    state: present
+  tags:
+    - install
+
+- name: Agent-bgp-push | Install
+  ansible.builtin.apt:
+    name: irp-announce-sender
+    state: "{{ irp_install_state }}"
+    update_cache: "{{ apt_update_cache }}"
+    cache_valid_time: "{{ apt_cache_valid_time }}"
+  tags:
+    - irp_update
+    - irp_announce_sender
+
+- name: Exabgp | Disable default exabgp.service
+  become: true
+  ansible.builtin.systemd:
+    name: exabgp.service
+    masked: true
+    state: stopped
+    daemon_reload: true
+  tags:
+    - systemd
+
+- name: Exabgp | Create log dir for exa and agents
+  become: true
+  ansible.builtin.file:
+    path: '/var/log/exabgp'
+    state: directory
+    owner: '{{ irp_user }}'
+    group: '{{ irp_group }}'
+    mode: 0755
+
+- name: Exabgp | Create data dir for exa and agents
+  become: true
+  ansible.builtin.file:
+    path: '/var/lib/irp'
+    state: directory
+    owner: '{{ irp_user }}'
+    group: '{{ irp_group }}'
+    mode: 0755

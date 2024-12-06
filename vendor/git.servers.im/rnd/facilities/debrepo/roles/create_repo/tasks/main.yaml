@@ -1,0 +1,24 @@
+---
+- name: aptly local repo | create repo
+  become: true
+  become_user: "{{ debrepo_aptly_user }}"
+  aptly_repo:
+    state: present
+    name: "{{ debrepo_repo_name }}"
+    distribution: "{{ debrepo_repo_dist }}"
+
+- name: aptly local repo | add local packages
+  become: true
+  become_user: "{{ debrepo_aptly_user }}"
+  ansible.builtin.command: aptly repo add {{ debrepo_repo_name }} {{ item }}
+  with_items: "{{ debrepo_local_packages }}"
+
+- name: aptly repo test | publish repo
+  become: true
+  become_user: "{{ debrepo_aptly_user }}"
+  aptly_publish_repo:
+    state: present
+    repo_name: "{{ debrepo_repo_name }}"
+    prefix: "{{ debrepo_repo_prefix }}"
+    distribution: "{{ debrepo_repo_dist }}"
+    architectures: "{{ debrepo_repo_architectures }}"

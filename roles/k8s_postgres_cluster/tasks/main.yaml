@@ -1,0 +1,110 @@
+---
+- name: Create namespace
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        labels:
+          kubernetes.io/metadata.name: "{{ kubernetes_namespace }}"
+        name: "{{ kubernetes_namespace }}"
+
+- name: Create backup S3 secret
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    namespace: "{{ kubernetes_namespace }}"
+    state: present
+    name: backups-s3-creds
+    definition:
+      apiVersion: v1
+      kind: Secret
+      data:
+        access_key: "{{ postgres_s3_access_key | b64encode }}"
+        secret_key: "{{ postgres_s3_secret_key | b64encode }}"
+  when:
+    - postgres_s3_access_key is defined
+    - postgres_s3_secret_key is defined
+
+- name: Create postgres irp user secret
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    namespace: "{{ kubernetes_namespace }}"
+    state: present
+    name: postgres-irp-user
+    definition:
+      apiVersion: v1
+      kind: Secret
+      data:
+        username: "{{ postgres_db_username | b64encode }}"
+        password: "{{ postgres_db_password | b64encode }}"
+
+- name: Deploy postgres cluster
+  tags:
+    - molecule-idempotence-notest
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    namespace: "{{ kubernetes_namespace }}"
+    name: "{{ postgres_cluster_name }}"
+    state: present
+    definition:
+      apiVersion: postgresql.cnpg.io/v1
+      kind: Cluster
+      spec:
+        instances: "{{ postgres_instances }}"
+        imageName: "{{ postgres_image }}"
+        bootstrap: "{{ postgres_bootstrap_config }}"
+        storage:
+          size: "{{ postgres_storage_size }}"
+          storageClass: "{{ postgres_storage_class }}"
+        resources: "{{ postgres_k8s_resources }}"
+        externalClusters: "{{ postgres_external_clusters }}"
+        postgresql:
+          parameters:
+            max_connections: "{{ postgres_max_connection }}"
+            max_locks_per_transaction: "{{ postgres_max_locks_per_transaction }}"
+            effective_io_concurrency: "{{ postgres_effective_io_concurrency }}"
+            autovacuum_freeze_max_age: "100000000"
+        monitoring:
+          enablePodMonitor: true
+        backup:
+          barmanObjectStore: "{{ postgres_barman_object_store }}"
+
+
+- name: Wait for the cluster
+  delegate_to: localhost
+  kubernetes.core.k8s_info:
+    context: "{{ kubernetes_context }}"
+    namespace: "{{ kubernetes_namespace }}"
+    name: "{{ postgres_cluster_name }}"
+    kind: Cluster
+    wait: true
+  register: cluster
+  until: (cluster.resources[0].status.phase == "Cluster in healthy state") or
+         (cluster.resources[0].status.phase == "Creating a new replica")
+  retries: 720
+  delay: 10
+
+
+- name: Setup daily backups
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    namespace: "{{ kubernetes_namespace }}"
+    name: "{{ postgres_cluster_name }}"
+    state: present
+    definition:
+      apiVersion: postgresql.cnpg.io/v1
+      kind: ScheduledBackup
+      metadata:
+        name: daily-backup
+      spec:
+        backupOwnerReference: self
+        cluster:
+          name: postgres-cluster
+        schedule: 0 0 1 * * *

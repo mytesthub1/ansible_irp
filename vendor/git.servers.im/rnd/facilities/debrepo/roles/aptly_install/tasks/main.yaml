@@ -1,0 +1,38 @@
+---
+- name: Install packages
+  become: true
+  ansible.builtin.apt:
+    name:
+      - aptly
+      - python3-dateutil  # need for aptlycli module
+      - acl # install setfacl, for ansible rights fix SCRD-654
+    state: present
+    install_recommends: false
+    update_cache: true
+  register: apt_res
+  retries: 7
+  delay: 10
+  until: apt_res is success
+
+- name: Configure aptly
+  become: true
+  ansible.builtin.template:
+    src: aptly.conf.j2
+    dest: /etc/aptly.conf
+    mode: 0644
+    owner: root
+
+- name: Add aptly user
+  become: true
+  ansible.builtin.user:
+    name: '{{ aptly_user }}'
+    state: present
+
+- name: Create repo dir
+  become: true
+  ansible.builtin.file:
+    path: '{{ aptly_root_dir }}'
+    state: directory
+    mode: 0755
+    owner: '{{ aptly_user }}'
+    group: '{{ aptly_user }}'

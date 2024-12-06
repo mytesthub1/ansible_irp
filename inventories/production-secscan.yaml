@@ -1,0 +1,9 @@
+---
+all:
+  hosts:
+    secscan.irp.servers.im:
+      ansible_host: 10.215.2.180
+
+secscan:
+  hosts:
+    secscan.irp.servers.im:

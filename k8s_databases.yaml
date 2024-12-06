@@ -1,0 +1,18 @@
+---
+- ansible.builtin.import_playbook: k8s_postgres.yaml
+  when: postgres_k8s | d(false)
+
+- name: Create databases in k8s
+  hosts: all
+  strategy: linear
+  run_once: true
+  gather_facts: false
+  roles:
+    - role: k8s_namespace
+    - role: k8s_clickhouse
+      when: clickhouse_k8s | d(false)
+    - role: k8s_redis
+      tags: redis
+    - role: k8s_alertmanager_config
+      kubernetes_namespace: redis-operator
+      when: slack_webhook_url is defined

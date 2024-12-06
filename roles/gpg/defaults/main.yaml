@@ -1,0 +1,4 @@
+---
+gpg_user: root
+gpg_key_name: GPG Key
+gpg_pub_key_path: gpg_key.pub

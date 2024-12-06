@@ -1,0 +1,6 @@
+---
+- name: Update IRP dns entries
+  hosts: all
+  gather_facts: false
+  roles:
+    - dns_update

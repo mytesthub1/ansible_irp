@@ -1,0 +1,21 @@
+[Unit]
+Description=irp-quality-solver
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/java \
+            -Dbackup.dir=/var/lib/quality-solver \
+            -Dserver.port={{ irp_quality_solver_local_port }} \
+            -Dserver.address=127.0.0.1 \
+            -Xms{{ irp_quality_solver_java_mem }} -Xmx{{ irp_quality_solver_java_mem }} \
+            -DLOG_PATH=/var/log/irp/quality-solver \
+            -Dlogging.config=/etc/irp-quality-solver/logback.xml \
+            -Xlog:gc:file=/var/log/irp/quality-solver/gc.log:time,level,tags:filecount=10,filesize=200m \
+            -jar /usr/lib/irp/irp-quality-solver.jar
+ProtectSystem=full
+ProtectHome=True
+User={{ irp_user }}
+Group={{ irp_group }}
+PrivateDevices=True
+UMask=022
+LogNamespace=irp

@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# This script is activating RND developing environment
+# 1. Exports required set of environment variables
+# 2. Activates python virtual environment and installs required python modules
+#    Take a look at the example in rnd/user_scripts/example
+
+# Use rdn/deactivate to unset environment variables and delete
+# temporary molecule instances
+
+# This script uses current user username (`whoami`) to run
+# user-specific script from rnd/user_scripts directory
+# to load credentials to connect to OpenStack.
+# rnd/user_scripts/* is in .gitignore.
+
+# This script should run as `source rnd/activate`
+
+
+if test -f "rnd/user_scripts/$USER"; then
+    echo "including rnd/user_scripts/$USER"
+    source "rnd/user_scripts/${USER}"
+else
+    echo "rnd/user_scripts/$USER not found"
+    return 1
+fi
+
+if [ -n "$VIRTUAL_ENV" ]; then
+    echo "Virtual Environment is already activated."
+else
+    if [ -f ".venv/bin/activate" ]; then
+        source .venv/bin/activate
+    elif [ -f "venv/bin/activate" ]; then
+        source venv/bin/activate
+    else
+        virtualenv -p python3 .venv
+        source .venv/bin/activate
+        pip3 install --upgrade pip
+    fi
+fi
+
+# pip3 install -r requirements.txt
+
+echo -e "\nActivated successfully"

@@ -1,0 +1,61 @@
+---
+- name: Install quality-solver
+  become: true
+  ansible.builtin.apt:
+    name: irp-quality-solver
+    state: '{{ irp_install_state }}'
+    update_cache: true
+    cache_valid_time: '{{ apt_cache_valid_time }}'
+  notify: Restart irp-quality-solver
+  tags:
+    - irp_update
+    - update_quality_solver
+
+- name: Create config directory for quality-solver
+  become: true
+  ansible.builtin.file:
+    path: /etc/irp-quality-solver
+    state: directory
+    mode: 0755
+
+- name: Copy logback.xml
+  become: true
+  ansible.builtin.copy:
+    src: logback.xml
+    dest: /etc/irp-quality-solver/logback.xml
+    mode: 0644
+  notify: Restart irp-quality-solver
+
+- name: Create /var/lib/quality-solver dir
+  become: true
+  ansible.builtin.file:
+    path: /var/lib/quality-solver
+    state: directory
+    mode: 0755
+    owner: '{{ irp_user }}'
+    group: '{{ irp_group }}'
+
+- name: Create /var/log/irp/quality-solver dir
+  become: true
+  ansible.builtin.file:
+    path: /var/log/irp/quality-solver
+    state: directory
+    mode: 0755
+    owner: '{{ irp_user }}'
+    group: '{{ irp_group }}'
+
+- name: Create systemd unit for irp-quality-solver
+  become: true
+  ansible.builtin.template:
+    src: irp-quality-solver.service.j2
+    dest: /lib/systemd/system/irp-quality-solver.service
+    mode: 0644
+  notify: Restart irp-quality-solver
+
+- name: Enable irp-quality-solver
+  become: true
+  ansible.builtin.systemd:
+    name: irp-quality-solver.service
+    enabled: true
+    state: started
+    daemon_reload: true

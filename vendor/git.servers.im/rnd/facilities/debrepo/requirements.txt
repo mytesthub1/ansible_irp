@@ -1,0 +1,10 @@
+ansible>=2.9.6, <2.10
+ansible-lint
+flake8
+molecule==3.1.2
+molecule-openstack>=0.1
+pytest-testinfra
+pytest
+openstacksdk
+aptly-api-client
+deb-pkg-tools

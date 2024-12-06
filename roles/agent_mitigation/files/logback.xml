@@ -1,0 +1,17 @@
+<configuration scan="true" scanPeriod="30 seconds">
+  <appender name="ROLLING" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOG_PATH}/log.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_PATH}/arch/log-%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
+      <maxFileSize>100MB</maxFileSize>
+      <maxHistory>30</maxHistory>
+      <totalSizeCap>5GB</totalSizeCap>
+    </rollingPolicy>
+    <encoder>
+      <pattern>%d{dd.MM.yyyy HH:mm:ss.SSS}] %highlight(%-5level) %magenta([%X{hash}]) [%thread] %logger{18} - %replace(%msg){'\n', ''}%n%xEx{20}</pattern>
+    </encoder>
+  </appender>
+  <root level="INFO">
+    <appender-ref ref="ROLLING" />
+  </root>
+</configuration>

@@ -1,0 +1,18 @@
+---
+- name: Permit bgp-push agent inventrory
+  hosts: all
+  run_once: true
+  gather_facts: false
+  vars:
+    station: '{{ groups.stations[0] }}'
+  tasks:
+    - name: Permit mitigation agent inventrory
+      delegate_to: localhost
+      serverscom.irp.station_maintenance_mode:
+        station_name: '{{ station }}'
+        agent_type: MITIGATION
+        irp_api_host: "{{ irp_api_host }}"
+        irp_api_user: "{{ irp_api_user }}"
+        irp_api_password: "{{ irp_api_password }}"
+        ssl_verify: false
+      changed_when: false

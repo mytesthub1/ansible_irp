@@ -1,0 +1,8 @@
+---
+- name: Converge | Create mirror
+  import_playbook: ../../create_mirror.yaml
+  vars:
+    upstream_ip: "{{ hostvars[groups.aptly_source_repo[0]].ansible_host }}"
+    debrepo_mirror_upstream_key_content: "{{ (lookup('file', 'molecule/default/' + gpg_public_report_path)| from_yaml)['debrepo_gpg_public_key'] }}"
+    debrepo_mirror_upstream_url: "http://{{ upstream_ip }}"
+    gpg_public_report_path: 'gpg_public_key.yaml'

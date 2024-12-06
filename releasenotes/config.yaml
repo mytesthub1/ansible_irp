@@ -1,0 +1,10 @@
+---
+sections:
+  - [features, New Features]
+  - [issues, Known Issues]
+  - [upgrade, Upgrade Notes]
+  - [security, Security Issues]
+  - [fixes, Bug Fixes]
+  - [inventory, Inventory changes]
+  - [docs, Documentation changes]
+  - [other, Other]

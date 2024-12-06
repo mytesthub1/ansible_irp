@@ -1,0 +1,8 @@
+---
+- name: Restart bgp-feed-collector
+  become: true
+  ansible.builtin.systemd:
+    name: irp-bgp-feed-collector.target
+    state: restarted
+    enabled: true
+    daemon_reload: true

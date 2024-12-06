@@ -1,0 +1,70 @@
+---
+- name: Create loki-irp ingress
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    namespace: loki
+    definition:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        annotations:
+          cert-manager.io/cluster-issuer: letsencrypt-production
+          nginx.ingress.kubernetes.io/whitelist-source-range: "{{ (mgmt_access_ips + all_irp_ips + flow_storage_access_ips) | join(', ') }}"
+        labels:
+          app.kubernetes.io/instance: loki-irp
+          app.kubernetes.io/name: loki-irp
+        name: loki-irp
+      spec:
+        ingressClassName: nginx
+        rules:
+          - host: "{{ loki_fqdn }}"
+            http:
+              paths:
+                - backend:
+                    service:
+                      name: loki
+                      port:
+                        number: 3100
+                  path: /
+                  pathType: Prefix
+        tls:
+          - hosts:
+              - "{{ loki_fqdn }}"
+            secretName: "{{ loki_fqdn }}-tls"
+
+- name: Create loki-irp GPN ingress
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    namespace: loki
+    definition:
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        annotations:
+          cert-manager.io/cluster-issuer: letsencrypt-production
+          nginx.ingress.kubernetes.io/whitelist-source-range: "{{ (mgmt_access_ips + all_irp_ips + flow_storage_access_ips) | join(', ') }}"
+        labels:
+          app.kubernetes.io/instance: loki-irp-gpn
+          app.kubernetes.io/name: loki-irp-gpn
+        name: loki-irp-gpn
+      spec:
+        ingressClassName: nginx
+        rules:
+          - host: "i.{{ loki_fqdn }}"
+            http:
+              paths:
+                - backend:
+                    service:
+                      name: loki
+                      port:
+                        number: 3100
+                  path: /
+                  pathType: Prefix
+        tls:
+          - hosts:
+              - "i.{{ loki_fqdn }}"
+            secretName: "i.{{ loki_fqdn }}-tls"

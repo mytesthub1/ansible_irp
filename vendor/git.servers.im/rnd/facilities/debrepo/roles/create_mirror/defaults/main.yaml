@@ -1,0 +1,5 @@
+---
+debrepo_aptly_user: aptly
+debrepo_archives_gpg_dir: "/home/{{ debrepo_aptly_user }}/archives_gpg"
+debrepo_mirror_architectures: ['amd64']
+debrepo_mirror_components: ['main']

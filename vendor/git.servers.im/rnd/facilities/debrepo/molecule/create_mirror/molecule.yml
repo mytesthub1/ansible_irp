@@ -1,0 +1,78 @@
+---
+driver:
+  name: delegated
+platforms:
+  - name: debrepo-source_repo1_u20_${MOLECULE_SCENARIO_NAME}_${USER}
+    groups:
+      - aptly_source_repo
+    image: 'Ubuntu 20.04-server (64 bit)'
+    flavor: '${OS_FLAVOR:-RND.2-1024-10}'
+    network: '${OS_GPN_NETWORK_NAME}'
+    ssh_user: '${OS_SSH_USER:-cloud-user}'
+    security_groups: '${SECURITY_GROUPS}'
+  - name: debrepo-mirror_u20_${MOLECULE_SCENARIO_NAME}_${USER}
+    groups:
+      - aptly_server
+    image: 'Ubuntu 20.04-server (64 bit)'
+    flavor: '${OS_FLAVOR:-RND.2-1024-10}'
+    network: '${OS_GPN_NETWORK_NAME}'
+    ssh_user: '${OS_SSH_USER:-cloud-user}'
+    security_groups: '${SECURITY_GROUPS}'
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      host_key_checking: false
+      callback_whitelist: profile_tasks
+    ssh_connection:
+      pipelining: true
+  env:
+    ANSIBLE_ROLES_PATH: "../../roles"
+  inventory:
+    host_vars:
+      debrepo-source_repo1_u20_${MOLECULE_SCENARIO_NAME}_${USER}:
+        debrepo_repo_name: repo1
+        debrepo_repo_dist: xenial
+        debrepo_repo_prefix: '.'
+        debrepo_repo_architectures: amd64
+        debrepo_local_packages:
+          - /srv/megapackage-1.0_all.deb
+          - /srv/megapackage-1.1_all.deb
+      debrepo-mirror_u20_${MOLECULE_SCENARIO_NAME}_${USER}:
+        debrepo_mirror_dist: xenial
+        debrepo_mirror_slug: repo1
+        debrepo_mirror_upstream_url: '{{ omit }}'
+        debrepo_mirror_components: ['main']
+        debrepo_mirror_update_deadline: "2021-01-01 00:01"
+        debrepo_mirror_filter: "megapackage (>= 1.1)"
+        debrepo_aptly_user: aptly
+        debrepo_archives_gpg_dir: /home/aptly/archives_gpg
+  playbooks:
+    create: ../resources/playbooks/create.yml
+    destroy: ../resources/playbooks/destroy.yml
+    cleanup: cleanup.yml
+
+verifier:
+  name: testinfra
+  options:
+    sudo: false
+    showlocals: true
+    verbose: true
+
+scenario:
+  create_sequence:
+    - create
+  converge_sequence:
+    - create
+    - prepare
+    - converge
+  destroy_sequence:
+    - destroy
+  test_sequence:
+    - create
+    - prepare
+    - converge
+    - idempotence
+    - verify
+    - cleanup
+    - destroy

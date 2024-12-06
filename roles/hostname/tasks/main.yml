@@ -1,0 +1,12 @@
+---
+- name: Configure hostname
+  become: true
+  ansible.builtin.hostname:
+    name: '{{ inventory_hostname }}'
+    use: systemd
+
+- name: Ensure hostname is resolvable
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: '{{ ansible_host }} {{ inventory_hostname }}'

@@ -1,0 +1,76 @@
+---
+- name: Destroy
+  hosts: all
+  gather_facts: false
+  vars:
+    job_slug: "{{ molecule_yml.scenario.name }}-{{ lookup('env','CI_JOB_ID') | default(lookup('env','USER'), true) }}"
+    molecule_scenario_name: "{{ molecule_yml.scenario.name }}"
+    keypair_name: "keypair-{{ job_slug }}"
+    internal_port_name: "{{ inventory_hostname }}_{{ job_slug }}_ext"
+    external_port_name: "{{ inventory_hostname }}_{{ job_slug }}_int"
+  tasks:
+    - name: Destroy molecule instance(s)
+      delegate_to: localhost
+      openstack.cloud.server:
+        name: "{{ inventory_hostname }}-{{ job_slug }}"
+        state: absent
+      register: delete_server
+      when: lookup('env', 'keep_vm') != molecule_scenario_name
+      ignore_errors: true
+
+    - name: Cleanup ports
+      delegate_to: localhost
+      openstack.cloud.port:
+        name: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ internal_port_name }}"
+        - "{{ external_port_name }}"
+      register: delete_port
+      when: lookup('env', 'keep_vm') != molecule_scenario_name
+      ignore_errors: true
+
+- name: Local cleanup
+  hosts: localhost
+  gather_facts: false
+  vars:
+    job_slug: "{{ molecule_yml.scenario.name }}-{{ lookup('env','CI_JOB_ID') | default(lookup('env','USER'), true) }}"
+    molecule_scenario_name: "{{ molecule_yml.scenario.name }}"
+    keypair_name: "keypair-{{ job_slug }}"
+    keypair_path: "{{ lookup('env', 'MOLECULE_EPHEMERAL_DIRECTORY') }}/ssh_key"
+  tasks:
+    - name: Overwrite molecule instance config
+      ansible.builtin.copy:
+        content: "[]"
+        dest: "{{ molecule_instance_config }}"
+        mode: 0644
+    - name: Delete remote keypair
+      openstack.cloud.keypair:
+        name: "{{ keypair_name }}"
+        state: absent
+      register: delete_keypair
+      ignore_errors: true
+
+    - name: Show private key
+      ansible.builtin.debug:
+        msg: "{{ lookup('file', keypair_path, errors='ignore') }}"
+      when: lookup('env', 'keep_vm') == molecule_scenario_name
+
+    - name: Manual cleanup required
+      ansible.builtin.debug:
+        msg: |
+          VMs and ports have not been destroyed because 'keep_vm' has been requested for this scenario.
+
+          Please note, you need to cleanup them by yourself.
+      when: lookup('env', 'keep_vm') == molecule_scenario_name
+
+- name: Check if delete is ok
+  hosts: all,localhost
+  gather_facts: false
+  tasks:
+    - name: Check if delete was ok
+      ansible.builtin.assert:
+        that:
+          - "delete_server|d({'failed': false}) is success"
+          - "delete_port|d({'failed': false}) is success"
+          - "delete_keypair|d({'failed': false}) is success"

@@ -1,0 +1,17 @@
+---
+- import_playbook: agents_inventory_cleanup.yaml
+- import_playbook: ../../../stations_registration.yaml
+- import_playbook: create_irp_agents.yaml
+- import_playbook: ../../../get_agents_inventory.yaml
+- import_playbook: sneak_and_reload_agents_inventory.yaml
+- import_playbook: ../../../agents.yaml
+- import_playbook: ../../../agents_validate.yaml
+- import_playbook: permit_bgp_push_inventory.yaml
+- import_playbook: ../../../get_bgp_push_inventory.yaml
+- import_playbook: sneak_and_reload_agents_bgp_push_inventory.yaml
+- import_playbook: ../../../agent_bgp_push.yaml
+- import_playbook: permit_mitigation_inventory.yaml
+- import_playbook: ../../../get_mitigation_inventory.yaml
+- import_playbook: sneak_and_reload_agents_mitigation_inventory.yaml
+- import_playbook: ../../../agents.yaml
+- import_playbook: agents_inventory_cleanup.yaml

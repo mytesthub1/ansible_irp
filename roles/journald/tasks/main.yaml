@@ -1,0 +1,27 @@
+---
+
+- name: Create journald irp config
+  become: true
+  ansible.builtin.template:
+    src: journald.conf.j2
+    dest: /etc/systemd/journald@irp.conf
+    mode: 0644
+  notify: Restart journald-irp
+
+- name: Create journald@irp systemd service override dir
+  become: true
+  ansible.builtin.file:
+    path: /etc/systemd/system/systemd-journald@irp.service.d
+    state: directory
+    mode: 0755
+
+- name: Override journald@irp stdout/stderr log
+  become: true
+  ansible.builtin.copy:
+    content: |
+      [Service]
+      StandardOutput=journal
+      StandardError=journal
+    dest: /etc/systemd/system/systemd-journald@irp.service.d/override.conf
+    mode: 0644
+  notify: Restart journald-irp

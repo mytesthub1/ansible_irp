@@ -1,0 +1,6 @@
+---
+- name: Setup dns  # noqa: role-name[path]
+  hosts: all
+  gather_facts: false
+  roles:
+    - ../../../roles/dns_update

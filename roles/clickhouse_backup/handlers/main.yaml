@@ -1,0 +1,8 @@
+---
+- name: Restart clickhouse-backup
+  become: true
+  ansible.builtin.systemd:
+    name: clickhouse-backup.service
+    state: restarted
+    enabled: true
+    daemon-reload: true

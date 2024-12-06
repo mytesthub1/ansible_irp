@@ -1,0 +1,31 @@
+---
+- name: Create vector config dir
+  become: true
+  ansible.builtin.file:
+    path: /etc/vector
+    state: directory
+    mode: 0755
+
+- name: Configure vector
+  become: true
+  ansible.builtin.template:
+    src: vector.toml.j2
+    dest: /etc/vector/vector.toml
+    mode: 0644
+  notify: Restart vector
+
+- name: Create Vector systemd service
+  become: true
+  ansible.builtin.template:
+    src: vector.service.j2
+    dest: /lib/systemd/system/vector.service
+    mode: 0644
+  notify: Restart vector
+
+- name: Start and enable vector
+  become: true
+  ansible.builtin.systemd:
+    name: vector
+    state: started
+    enabled: true
+    daemon_reload: true

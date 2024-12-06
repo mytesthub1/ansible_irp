@@ -1,0 +1,16 @@
+---
+- name: Configure cars 100G bond
+  become: true
+  ansible.builtin.template:
+    src: bond0.yaml.j2
+    dest: /etc/netplan/bond0.yaml
+    mode: 0644
+  notify: Netplan apply
+
+- name: Configure dcspine interface
+  become: true
+  ansible.builtin.template:
+    src: dcspine.yaml.j2
+    dest: /etc/netplan/dcspine.yaml
+    mode: 0644
+  notify: Netplan apply

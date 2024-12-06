@@ -1,0 +1,126 @@
+---
+- name: Add irp helm repos
+  delegate_to: localhost
+  kubernetes.core.helm_repository:
+    name: "{{ item.name }}"
+    repo_url: "{{ item.url }}"
+    repo_username: "{{ irp_helm_repo_user }}"
+    repo_password: "{{ irp_helm_repo_password }}"
+  loop:
+    - name: irp-taco
+      url: "{{ irp_taco_helm_repo_url }}"
+    - name: irp-reborn
+      url: "{{ irp_reborn_helm_repo_url }}"
+
+- name: Deploy irp-ui-api
+  delegate_to: localhost
+  kubernetes.core.helm:
+    context: "{{ kubernetes_context }}"
+    name: irp-ui-api
+    chart_ref: irp-taco/irp-ui-api
+    release_namespace: "{{ kubernetes_namespace }}"
+    create_namespace: true
+    update_repo_cache: true
+    wait: true
+    values:
+      image:
+        tag: "{{ irp_image_tag }}"
+        pullPolicy: "{{ irp_image_pull_policy }}"
+      ingress:
+        enabled: false
+      sentry_dsn: ""
+
+- name: Deploy irp-rest
+  delegate_to: localhost
+  kubernetes.core.helm:
+    context: "{{ kubernetes_context }}"
+    name: irp-rest
+    chart_ref: irp-taco/irp-rest
+    release_namespace: "{{ kubernetes_namespace }}"
+    create_namespace: true
+    values:
+      image:
+        tag: "{{ irp_image_tag }}"
+        pullPolicy: "{{ irp_image_pull_policy }}"
+      ingress:
+        enabled: false
+      irpRestMaxMemory: 8G
+      sentry_dsn: ""
+
+- name: Deploy irp-conductor-bgp-feed
+  delegate_to: localhost
+  kubernetes.core.helm:
+    context: "{{ kubernetes_context }}"
+    name: irp-conductor-bgp-feed
+    chart_ref: irp-taco/irp-conductor-bgp-feed
+    release_namespace: "{{ kubernetes_namespace }}"
+    create_namespace: true
+    values:
+      image:
+        tag: "{{ irp_image_tag }}"
+        pullPolicy: "{{ irp_image_pull_policy }}"
+      sentry_dsn: ""
+      ingress:
+        enabled: false
+
+- name: Deploy irp-quality-solver
+  delegate_to: localhost
+  kubernetes.core.helm:
+    context: "{{ kubernetes_context }}"
+    name: irp-quality-solver
+    chart_ref: irp-taco/irp-quality-solver
+    release_namespace: "{{ kubernetes_namespace }}"
+    create_namespace: true
+    values:
+      image:
+        tag: "{{ irp_image_tag }}"
+        pullPolicy: "{{ irp_image_pull_policy }}"
+      irpRestMaxMemory: 8G
+      sentry_dsn: ""
+      ingress:
+        enabled: false
+
+- name: Deploy irp-botnet-collector
+  delegate_to: localhost
+  kubernetes.core.helm:
+    context: "{{ kubernetes_context }}"
+    name: irp-botnet-collector
+    chart_ref: irp-taco/irp-botnet-collector
+    release_namespace: "{{ kubernetes_namespace }}"
+    create_namespace: true
+    values:
+      image:
+        tag: "{{ irp_image_tag }}"
+        pullPolicy: "{{ irp_image_pull_policy }}"
+      sentry_dsn: ""
+      ingress:
+        enabled: false
+
+- name: Deploy irp-reborn
+  delegate_to: localhost
+  kubernetes.core.helm:
+    context: "{{ kubernetes_context }}"
+    name: irp-reborn
+    chart_ref: irp-reborn/irp-reborn
+    release_namespace: "{{ kubernetes_namespace }}"
+    create_namespace: true
+    update_repo_cache: true
+    values:
+      image:
+        tag: "{{ irp_reborn_image_tag }}"
+        pullPolicy: "{{ irp_reborn_image_pull_policy }}"
+      ingress:
+        enabled: false
+      sentry_dsn: ""
+
+- name: Waiting for irp-ui-api to come online
+  delegate_to: localhost
+  ansible.builtin.uri:
+    method: GET
+    url: "{{ irp_api_host }}/api/heartbeat"
+    status_code: [200, 500]
+    validate_certs: false
+  register: status
+  until: status.status == 200
+  retries: 60
+  delay: 2

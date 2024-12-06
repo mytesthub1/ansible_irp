@@ -1,0 +1,12 @@
+[Unit]
+Description=Resource of Interest exporter
+After=network.target
+
+[Service]
+Type=simple
+Restart=on-failure
+RestartSec=5
+ExecStart=/opt/roi-exporter/roi-exporter.py {{ roi_exporter_listen_address }} {{ roi_exporter_listen_port }}
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,9 @@
+.*.sw*
+rnd/user_scripts/*
+!rnd/user_scripts/example
+.venv
+/venv/
+project_types/facility/molecule/*/pytestdebug.log
+__pycache__
+.python-version
+.vscode

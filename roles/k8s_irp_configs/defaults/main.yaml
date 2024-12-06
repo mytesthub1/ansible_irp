@@ -1,0 +1,5 @@
+---
+postgres_k8s: false
+clickhouse_k8s: false
+station_access_list: []
+postgres_cluster_name: postgres-cluster

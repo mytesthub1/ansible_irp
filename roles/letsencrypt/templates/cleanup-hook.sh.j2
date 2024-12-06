@@ -1,0 +1,22 @@
+#!/bin/bash
+set -e
+
+if [ -z "$CERTBOT_DOMAIN" ]; then
+    echo "Empty $CERTBOT_DOMAIN provided"
+    exit 1
+fi
+
+if [ -z "$CERTBOT_VALIDATION" ]; then
+    echo "Empty $CERTBOT_VALIDATION provided"
+    exit 1
+fi
+
+echo "Domain: $CERTBOT_DOMAIN"
+echo "Validation: $CERTBOT_VALIDATION"
+
+nsupdate <<EOF
+server {{ ddns_server }}
+key {{ ddns_key }}
+update delete _acme-challenge.${CERTBOT_DOMAIN}
+send
+EOF

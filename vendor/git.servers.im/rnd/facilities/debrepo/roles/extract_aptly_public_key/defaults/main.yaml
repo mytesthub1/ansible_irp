@@ -1,0 +1,3 @@
+---
+debrepo_aptly_user: aptly
+gpg_key_name: Deprepo aptly GPG Key

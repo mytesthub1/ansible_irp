@@ -1,0 +1,26 @@
+---
+- name: Check ddns_key
+  run_once: true
+  ansible.builtin.assert:
+    that: (ddns_key)
+    fail_msg: ddns_key is not defined, skipping DNS update
+  failed_when: false
+
+- name: Update dns entry
+  delegate_to: localhost
+  vars:
+    key_algorithm: "{{ ddns_key.split(':')[0] }}"
+    key_name: "{{ ddns_key.split(':')[1].split()[0] }}"
+    key_secret: "{{ ddns_key.split()[1] }}"
+  community.general.nsupdate:
+    key_algorithm: '{{ key_algorithm }}'
+    key_name: '{{ key_name }}'
+    key_secret: '{{ key_secret }}'
+    server: '{{ lookup("dig", ddns_server) }}'
+    record: '{{ inventory_hostname.split("." + irp_dns_zone)[0] }}'
+    zone: '{{ irp_dns_zone }}'
+    value: '{{ ansible_host }}'
+    type: A
+    ttl: 60
+    state: present
+  when: (ddns_key)

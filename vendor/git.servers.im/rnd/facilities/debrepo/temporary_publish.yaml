@@ -1,0 +1,7 @@
+---
+- name: Update mirror and create temp publish
+  hosts: aptly_server
+  tags: [temp_publish]
+  gather_facts: false
+  roles:
+    - role: temporary_publish

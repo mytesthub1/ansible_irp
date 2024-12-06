@@ -1,0 +1,49 @@
+---
+- name: Install packages
+  become: true
+  ansible.builtin.apt:
+    name:
+      - gnupg1
+      - haveged
+    install_recommends: false
+    update_cache: true
+    cache_valid_time: 3600
+    state: present
+
+- name: Get GPG keys
+  become: true
+  become_user: '{{ gpg_user }}'
+  ansible.builtin.command: gpg1 --list-secret-keys "{{ gpg_key_name }}"
+  register: gpg_keys
+  changed_when: false
+  failed_when:
+    - gpg_keys.rc != 0
+    - "'secret key not available' not in gpg_keys.stderr"
+
+- name: Generate GPG key
+  become: true
+  become_user: '{{ gpg_user }}'
+  ansible.builtin.shell: |
+    set -e -o pipefail
+    echo "
+      Key-Type: RSA
+      Key-Length: 4096
+      Subkey-Type: RSA
+      Subkey-Length: 4096
+      Name-Real: {{ gpg_key_name }}
+      Expire-Date: 0
+      %no-ask-passphrase
+      %no-protection
+      %commit
+    " | gpg1 --batch --gen-key -
+  args:
+    executable: /bin/bash
+  when: gpg_keys.stdout_lines|length == 0
+  changed_when: true
+
+- name: Export Public key
+  become: true
+  become_user: '{{ gpg_user }}'
+  ansible.builtin.command:
+    cmd: gpg1 --armor --output {{ gpg_pub_key_path }} --export "{{ gpg_key_name }}"
+    creates: /var/www/aptly/irp_gpg.pub

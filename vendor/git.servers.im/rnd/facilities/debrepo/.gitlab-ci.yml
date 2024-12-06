@@ -1,0 +1,103 @@
+---
+image:
+  name: cr.servers.com/rnd/ansible-ci:2.9.6-2021-03-04-ee877dca
+
+stages:
+  - lint
+  - test
+
+.lint_template: &lint
+  tags:
+    - rnd
+    - docker
+  interruptible: true
+  before_script:
+    - chmod 0700 .
+
+
+lint_yaml:
+  stage: lint
+  <<: *lint
+  script:
+    - /usr/bin/yamllint --format colored .
+
+
+lint_ansible:
+  stage: lint
+  <<: *lint
+  script:
+    - ansible-lint -vvvvv --force-color install.yaml
+    - ansible-lint -vvvvv --force-color create_mirror.yaml
+    - ansible-lint -vvvvv --force-color temporary_publish.yaml
+    - ansible-lint -vvvvv --force-color switch_temp_snapshot.yaml
+
+
+lint_bash:
+  stage: lint
+  <<: *lint
+  script:
+    - shellcheck --color -e SC1091,SC1090 rnd/activate
+    - shellcheck --color -e SC1090 rnd/deactivate
+
+
+black:
+  stage: lint
+  <<: *lint
+  script:
+    - black --check library/*.py
+    - black --check module_utils/*.py
+    - black --check molecule/*/tests/*.py
+
+.test_template: &test_common
+  tags:
+    - rnd
+    - docker
+  artifacts:
+    name: "$CI_JOB_NAME"
+    paths: ['molecule_cache']
+    when: always
+    expire_in: 20min
+  before_script:
+    - source ${openstack_rc}
+    - rm -rf /root/.cache
+    - ANSIBLE_INVENTORY=/dev/null ansible -m file -a "path=${CI_PROJECT_DIR}/molecule_cache state=directory" localhost
+    - ANSIBLE_INVENTORY=/dev/null ansible -m file -a "src=${CI_PROJECT_DIR}/molecule_cache dest=/root/.cache state=link" localhost
+    - apt update
+    - apt install aptly -y
+    - >
+      if [ "$keep_vm" == "$SCENARIO" ]; then
+        echo "keep_vm is set. Created VMs need to be cleaned manually"
+        export DESTROY_FLAG=never
+      else
+        export DESTROY_FLAG=always
+      fi
+  variables:
+    OS_GPN_NETWORK_NAME: 'global_private'
+    ANSIBLE_FORCE_COLOR: 'true'
+    USER: "ci-$CI_JOB_ID"
+
+test:
+  stage: test
+  <<: *test_common
+  script:
+    - molecule $ACTION -s $SCENARIO --destroy $DESTROY_FLAG
+  parallel:
+    matrix:
+      - SCENARIO:
+          - default
+          - local_repo
+          - create_mirror
+          - api
+        ACTION: test
+  interruptible: false
+
+unit_test:
+  stage: test
+  tags:
+    - rnd
+    - docker
+  before_script:
+    - apt update
+    - apt install aptly -y
+  script:
+    - pytest module_utils/test_unit_aptlycli.py

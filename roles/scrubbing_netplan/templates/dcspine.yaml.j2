@@ -1,0 +1,16 @@
+network:
+  ethernets:
+    {{ net.dcspine.iface }}:
+      addresses:
+        - {{ net.dcspine.address }}
+      routes:
+{% for route in net.dcspine.routes %}
+        - to: {{ route.to }}
+          via: {{ route.via }}
+{% endfor %}
+      nameservers:
+        addresses:
+          - 1.1.1.1
+          - 1.0.0.1
+          - 8.8.8.8
+          - 8.8.4.4

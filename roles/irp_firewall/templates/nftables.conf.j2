@@ -1,0 +1,45 @@
+#!/usr/sbin/nft -f
+
+flush ruleset
+
+table inet filter {
+  chain input {
+    type filter hook input priority 0; policy drop;
+    ct state {established, related} accept
+    ct state invalid drop
+    iifname lo accept
+    ip protocol icmp accept
+
+    # Permit everything from mgmt_access_list
+    {% for rule in mgmt_access_list %}
+    ip saddr {{ rule.cidr }} accept comment "{{ rule.name }}"
+    {% endfor %}
+
+    # Permit everything from kubernetes_nodes
+    {% for rule in kubernetes_nodes %}
+    ip saddr {{ rule.ip }} accept comment "{{ rule.name }}"
+    {% endfor %}
+
+    # Permit everything from irp_allow_hosts
+    {% for host in irp_allow_hosts %}
+    ip saddr {{ hostvars[host].ansible_host }} accept comment "{{ hostvars[host].inventory_hostname }}"
+    {% for ip in hostvars[host].ipv4_additional_addresses|d([]) %}
+    ip saddr {{ ip }} accept comment "{{ hostvars[host].inventory_hostname }}"
+    {% endfor %}
+    {% endfor %}
+
+    # Permit http/https access
+    {% for rule in http_access_ips %}
+    ip saddr {{ rule.cidr }} tcp dport 80 accept comment "{{ rule.name }}"
+    ip saddr {{ rule.cidr }} tcp dport 443 accept comment "{{ rule.name }}"
+    {% endfor %}
+  }
+
+  chain forward {
+    type filter hook forward priority 0; policy drop;
+  }
+
+  chain output {
+    type filter hook output priority 0;
+  }
+}

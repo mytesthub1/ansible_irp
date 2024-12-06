@@ -1,0 +1,59 @@
+---
+- name: Create namespace
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        labels:
+          kubernetes.io/metadata.name: "{{ kubernetes_namespace }}"
+        name: "{{ kubernetes_namespace }}"
+
+- name: Create services secret
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    namespace: "{{ kubernetes_namespace }}"
+    definition: "{{ lookup('template', 'irp-services-secret.yaml.j2') }}"
+
+- name: Create servers.conf configmap
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    namespace: "{{ kubernetes_namespace }}"
+    definition: "{{ lookup('template', 'irp-servers-conf-configmap.yaml.j2') }}"
+
+- name: Create docker pull secret
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    namespace: "{{ kubernetes_namespace }}"
+    definition: "{{ lookup('template', 'repo-secret.yaml.j2') }}"
+
+- name: Create provisioned users config
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    namespace: "{{ kubernetes_namespace }}"
+    definition: "{{ lookup('template', 'irp-provisioned-users-secret.yaml.j2') }}"
+
+- name: Create IRP web access config map
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    state: present
+    namespace: "{{ kubernetes_namespace }}"
+    definition:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: irp-ingress-acl
+      data:
+        whitelist-source-range: "{{ (mgmt_access_ips | d([]) + users_access_ips | d([]) + flow_storage_access_ips | d([]) + app_ips | d([]) + monitoring_ips | d([]) + external_servers_access_ips | d([])) | join(', ') }}"

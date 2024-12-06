@@ -1,0 +1,26 @@
+---
+- name: Register stations in application
+  hosts: stations
+  gather_facts: false
+  tasks:
+    - name: Station registration
+      delegate_to: localhost
+      serverscom.irp.station_registration:
+        irp_api_host: "{{ irp_api_host }}"
+        irp_api_user: "{{ irp_api_user }}"
+        irp_api_password: "{{ irp_api_password }}"
+        ssl_verify: false
+        fqdn: '{{ inventory_hostname }}'
+        management_ipv4: '{{ ansible_host }}'
+        ssh_username: '{{ ci_ssh_user | d(ansible_ssh_user) }}'
+        ssh_port: '{{ ansible_ssh_port | default(22) }}'
+        provider_data: '{{ provider_data }}'
+        ipv4_aliases: '{{ ipv4_aliases | d([]) }}'
+        ipv4_additional_addresses: '{{ [ansible_host] + ipv4_additional_addresses | d([]) + ipv4_aliases | d([]) }}'
+
+- name: Install clickhouse
+  hosts: clickhouse
+  gather_facts: false
+  roles:
+    - role: irp_firewall
+      irp_allow_hosts: '{{ groups.stations }}'

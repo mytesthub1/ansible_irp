@@ -1,0 +1,7 @@
+---
+- name: Install vector
+  hosts: all
+  gather_facts: true
+  roles:
+    - role: vector
+      when: loki_endpoint is defined

@@ -1,0 +1,73 @@
+---
+- name: Check ssl certificate vars
+  ansible.builtin.assert:
+    that:
+      - item.ssl_cert_file is defined
+      - item.ssl_fallback_cert_file is defined
+    fail_msg: ssl_cert_file and ssl_fallback_cert_file must be defined
+  when: item.ssl|d(false)
+  loop: '{{ nginx_sites }}'
+
+- name: Install nginx
+  become: true
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+  notify: Restart nginx
+
+- name: Removing default
+  become: true
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Reload nginx
+
+- name: Check if ssl_cert_file exists
+  ansible.builtin.stat:
+    path: '{{ item.ssl_cert_file }}'
+  when: item.ssl|d(false)
+  loop: '{{ nginx_sites }}'
+  register: ssl_cert_files
+
+- name: Increase server_names_hash_bucket_size to support long fqdn
+  become: true
+  ansible.builtin.lineinfile:
+    regexp: server_names_hash_bucket_size
+    line: "        server_names_hash_bucket_size 128;"
+    path: /etc/nginx/nginx.conf
+  notify: Reload nginx
+
+- name: Configure sites
+  become: true
+  ansible.builtin.template:
+    src: '{{ item.template }}'
+    dest: /etc/nginx/sites-available/{{ item.site }}.conf
+    mode: 0644
+  vars:
+    ssl_certificate_exists: '{{ ssl_cert_files.results[site_idx].stat.exists }}'
+    ssl_certificate: '{{ item.ssl_cert_file if ssl_certificate_exists else item.ssl_fallback_cert_file }}'
+    ssl_certificate_key: '{{ item.ssl_cert_key if ssl_certificate_exists else item.ssl_fallback_cert_key }}'
+    nginx_allowed_hosts: '{{ item.nginx_allowed_hosts | d([]) }}'
+    nginx_allowed_ips: '{{ item.nginx_allowed_ips | d([]) }}'
+  loop: '{{ nginx_sites }}'
+  loop_control:
+    index_var: site_idx
+  notify: Reload nginx
+
+- name: Enable site
+  become: true
+  ansible.builtin.file:
+    state: link
+    src: /etc/nginx/sites-available/{{ item.site }}.conf
+    dest: /etc/nginx/sites-enabled/{{ item.site }}.conf
+    mode: 0644
+  loop: '{{ nginx_sites }}'
+
+- name: Copy htpasswd files
+  become: true
+  ansible.builtin.copy:
+    src: files/{{ item }}
+    dest: /etc/nginx/{{ item }}
+    mode: 0640
+    group: www-data
+  loop: '{{ nginx_htpasswds }}'

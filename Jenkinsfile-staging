@@ -1,0 +1,65 @@
+pipeline {
+  agent {
+    docker {
+      image 'cr.servers.com/rnd/ansible-ci:5.2.0-2022-01-17-b82f59e0'
+      args '-u 0 -v /var/run/docker.sock:/var/run/docker.sock --privileged --net=host'
+      label 'docker-ansible-29'
+    }
+  }
+  options {
+    ansiColor('xterm')
+  }
+
+  stages {
+    stage('Prepare') {
+      environment {
+        ANSIBLE_FORCE_COLOR = "true"
+        ANSIBLE_INVENTORY = "inventories/staging.yaml"
+        ANSIBLE_HOST_KEY_CHECKING = "False"
+        ANSIBLE_REMOTE_USER = "cloud-user"
+      }
+      stages {
+        stage('Rebuild VMs') {
+          steps {
+            sshagent (credentials: ['gov2-irp-ci']) {
+              withCredentials([usernamePassword(credentialsId: 'gov2_os_sid', usernameVariable: 'OS_USERNAME', passwordVariable: 'OS_PASSWORD')]) {
+                sh 'ansible-playbook -i staging -i ci/staging_inventory.yaml staging_reinstall.yaml -D'
+              }
+            }
+          }
+        }
+        stage('Install IRP') {
+          steps {
+            sshagent (credentials: ['gov2-irp-ci']) {
+              sh 'ansible-playbook users.yaml -D'
+              sh 'ansible-playbook common.yaml -D'
+              sh 'ansible-playbook databases.yaml -D'
+              lock('irp-ddns') {
+                withCredentials([string(credentialsId: 'irp_ddns_key', variable: 'DDNS_KEY')]) {
+                  sh '''ansible-playbook central.yaml -D -e slack_token="" -e ddns_key="'$DDNS_KEY'" -e letsencrypt_staging=$letsencrypt_staging -e irp_allow_notifications=false'''
+                }
+              }
+              withCredentials([string(credentialsId: 'irp_ddns_key_short', variable: 'DDNS_KEY')]) {
+                sh 'ansible-playbook stations.yaml -D -e key_secret="$DDNS_KEY"'
+              }
+              sh 'ansible-playbook get_inventory.yaml -D'
+              sh 'ansible-playbook -i inventories/inventory-agents-staging.yaml -e ansible_user=cloud-user agents.yaml -D'
+              sh 'ansible-playbook get_mitigation_inventory.yaml -D'
+              sh 'ansible-playbook -i inventories/inventory-agents-mitigation-staging.yaml -e ansible_user=cloud-user agents.yaml -D'
+              sh 'ansible-playbook ci/request_bgp_push_inventory.yaml -e station=epush-a1.staging.irp.servers.im -D'
+              sh 'sleep 60' // Waiting for irp-rest to proceed inventory request
+              sh 'ansible-playbook get_bgp_push_inventory.yaml -D'
+              sh 'ansible-playbook -i inventories/inventory-agents-bgp-push-staging.yaml -D -e ansible_user=cloud-user agent_bgp_push.yaml'
+              sh 'ansible-playbook monitoring.yaml -D'
+            }
+          }
+        }
+      }
+    }
+  }
+  post {
+    always {
+      cleanWs()
+    }
+  }
+}

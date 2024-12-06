@@ -1,0 +1,19 @@
+---
+- name: Create repo snapshot
+  hosts: aptly_server
+  tags: [repo_snapshot]
+  gather_facts: false
+  become: true
+  become_user: "{{ debrepo_aptly_user | d(aptly) }}"
+  tasks:
+    - name: Collect facts
+      setup:
+        gather_subset:
+          - '!all'
+
+    - name: create repo snapshot
+      aptly_snapshot:
+        state: present
+        name: "snapshot-repo-{{ debrepo_repo_name }}-{{ debrepo_repo_dist }}-{{ ansible_date_time.date }}"
+        src: "{{ debrepo_repo_name }}"
+        from_src: repo

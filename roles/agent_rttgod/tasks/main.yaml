@@ -1,0 +1,81 @@
+---
+- name: Agent-rttgod | Check if all addresses are available
+  ansible.builtin.assert:
+    that:
+      - item.ping_source_ip in (ipv4_aliases + [ansible_host] + ansible_all_ipv4_addresses)
+    msg:
+      'All used addresses should be in ipv4_aliases/ansbile_host'
+  loop: '{{ rttgod }}'
+
+- name: Agent-rttgod | Install rttgod
+  become: true
+  ansible.builtin.apt:
+    name: rttgod
+    state: '{{ irp_install_state }}'
+    update_cache: true
+    cache_valid_time: '{{ apt_cache_valid_time }}'
+  notify:
+    - Restart rttgod
+  tags:
+    - irp_update
+
+- name: Agent-rttgod | Install irp-network-utils
+  become: true
+  ansible.builtin.apt:
+    name: irp-network-utils
+    state: '{{ irp_install_state }}'
+    update_cache: true
+    cache_valid_time: '{{ apt_cache_valid_time }}'
+  notify:
+    - Restart irp-network-utils
+  tags:
+    - irp_update
+
+- name: Agent-rttgod | Enable and start irp-network-utils
+  become: true
+  ansible.builtin.systemd:
+    name: irp-network-utils.service
+    enabled: true
+    daemon_reload: true
+    state: started
+
+- name: Agent-rttgod | Create systemd target
+  become: true
+  ansible.builtin.template:
+    src: rttgod.target
+    dest: /etc/systemd/system/rttgod.target
+    mode: 0644
+
+- name: Agent-rttgod | Create systemd services for each instance
+  become: true
+  ansible.builtin.template:
+    src: rttgod.service.j2
+    dest: /etc/systemd/system/{{ item.service_name }}.service
+    mode: 0644
+  loop: '{{ rttgod }}'
+  loop_control:
+    label: '{{ item.name }}'
+  notify:
+    - Restart rttgod
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
+
+- name: Agent-rttgod | Enable each service
+  become: true
+  ansible.builtin.systemd:
+    name: '{{ item.service_name }}.service'
+    enabled: true
+    daemon_reload: true
+    state: started
+  loop: '{{ rttgod }}'
+  loop_control:
+    label: '{{ item.name }}'
+
+- name: Agent-rttgod | Enable and start target
+  become: true
+  ansible.builtin.systemd:
+    name: rttgod.target
+    state: started
+    enabled: true
+    daemon_reload: true

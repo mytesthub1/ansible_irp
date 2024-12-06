@@ -1,0 +1,34 @@
+---
+- name: Add cnpg helm repos
+  delegate_to: localhost
+  kubernetes.core.helm_repository:
+    name: cnpg
+    repo_url: https://cloudnative-pg.github.io/charts
+
+- name: Deploy cnpg
+  delegate_to: localhost
+  kubernetes.core.helm:
+    context: "{{ kubernetes_context }}"
+    name: cnpg
+    chart_ref: cnpg/cloudnative-pg
+    chart_version: "{{ cnpg_version }}"
+    release_namespace: cnpg-system
+    create_namespace: true
+    update_repo_cache: true
+    wait: true
+
+- name: Install cnpg grafana dashboard
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    namespace: prometheus-stack
+    state: present
+    definition: "{{ lookup('file', 'grafana-configmap.yaml') | from_yaml }}"
+
+- name: Install cnpg alerts
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    context: "{{ kubernetes_context }}"
+    namespace: prometheus-stack
+    state: present
+    definition: "{{ lookup('file', 'cnpg-prometheusrule.yaml') | from_yaml }}"

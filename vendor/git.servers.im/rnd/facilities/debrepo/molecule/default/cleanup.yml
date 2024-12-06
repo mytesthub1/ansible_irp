@@ -1,0 +1,15 @@
+---
+- name: Cleanup
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: remove gpg local file
+      ansible.builtin.file:
+        state: absent
+        path: gpg_public_key.yaml
+
+    - name: remove temp_report file
+      ansible.builtin.file:
+        state: absent
+        path: ../../temp_publish_info.yaml

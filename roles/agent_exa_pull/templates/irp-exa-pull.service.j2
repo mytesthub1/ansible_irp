@@ -1,0 +1,25 @@
+[Unit]
+Description={{ item.name }}
+ReloadPropagatedFrom=irp-exa-pull.target
+PartOf=irp-exa-pull.target
+[Service]
+Type=simple
+Environment=exabgp_daemon_daemonize=false
+Environment=ETC=/etc/exabgp/{{ item.name }}
+ExecStartPre=+mkdir -p /run/exabgp/
+ExecStartPre=+chown {{ irp_user }}:{{ irp_group }} /run/exabgp/
+ExecStartPre=-/usr/bin/mkfifo -m 0600 /run/exabgp/{{ item.name }}.in
+ExecStartPre=-/usr/bin/mkfifo -m 0600 /run/exabgp/{{ item.name }}.out
+ExecStart=/usr/sbin/exabgp /etc/exabgp/{{ item.name }}/exabgp.conf --env /etc/exabgp/{{ item.name }}/exabgp.env
+ExecStopPost=-/usr/bin/rm -f /run/exabgp/{{ item.name }}.in
+ExecStopPost=-/usr/bin/rm -f /run/exabgp/{{ item.name }}.out
+ExecReload=/bin/kill -USR1 $MAINPID
+ProtectSystem=full
+ProtectHome=True
+User={{ irp_user }}
+Group={{ irp_group }}
+PrivateDevices=True
+UMask=022
+LogNamespace=irp
+[Install]
+WantedBy=irp-exa-pull.target

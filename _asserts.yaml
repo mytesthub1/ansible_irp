@@ -1,0 +1,36 @@
+---
+- name: Assert Ansible versions
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Check ansible version
+      ansible.builtin.assert:
+        that:
+          - ansible_version.full is version('2.16', '>=')
+          - ansible_version.full is version('2.17', '<')
+        msg: Use ansible 2.16
+      tags:
+        - always
+
+- name: Check ansible.cfg
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Check ansible.cfg
+      ansible.builtin.fail:
+        msg: "Please, use ansible.cfg from the root of this project"
+      tags: [set_to_skip_in_ansible_cfg]
+
+- name: Check ansible_host and inventory_hostname
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Check that all hosts has ip ansible_host
+      ansible.builtin.assert:
+        that: ansible_host | ansible.utils.ipaddr
+        fail_msg: ansible_host must be an IP address
+
+    - name: Check that all hosts are fqdn
+      ansible.builtin.assert:
+        that: irp_dns_zone in inventory_hostname
+        fail_msg: All hosts must be in the {{ irp_dns_zone }} domain

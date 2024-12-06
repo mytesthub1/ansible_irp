@@ -1,0 +1,8 @@
+---
+# tasks file for nginx
+- name: nginx | Install nginx
+  become: true
+  ansible.builtin.apt: name=nginx state=present
+  tags:
+    - apt
+    - nginx

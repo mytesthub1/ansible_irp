@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "ansible-irp"
+version = "0.1.0"
+description = "ansible-irp"
+authors = ["Servers.com RnD Team <rnd@servers.com>"]
+
+[tool.poetry.dependencies]
+python = "~3.11.0"
+ansible = "^9.2.0"
+ansible-lint = {version = ">=6.22.2", markers = "platform_system != 'Windows'"}
+molecule = "^6.0.3"
+openstacksdk = "^2.1.0"
+mitogen = "==0.3.4"
+pytest = "^8.0.0"
+flaky = ">=3.7.0"
+black = "^24.1.1"
+testinfra = "^6.0.0"
+dnspython = "^2.6.1"
+kubernetes = "^29.0.0"
+netaddr = "^1.2.1"
+pyyaml = "^6.0.1"
+irp-openapi-client = {git = "https://git.servers.im/irp/infra/irp_openapi_client.git"}

@@ -1,0 +1,18 @@
+---
+- name: Refresh bgp_push agents inventory
+  hosts: localhost
+  gather_facts: false
+  vars:
+    inventory_directory: "{{ lookup('env','MOLECULE_EPHEMERAL_DIRECTORY') }}/inventory"
+    tier: "{{ hostvars[groups.all[0]].tier }}"
+  tasks:
+
+    - name: Set bgp_push agents inventory
+      ansible.builtin.copy:
+        src: ../../../inventories/inventory-agents-bgp-push-{{ tier }}.yaml
+        dest: '{{ inventory_directory }}/agents.yaml'
+        mode: 0644
+      changed_when: false
+
+    - name: Refresh inventory
+      ansible.builtin.meta: refresh_inventory

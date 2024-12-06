@@ -1,0 +1,24 @@
+---
+- name: Create clickhouse-backup config
+  become: true
+  ansible.builtin.copy:
+    content: '{{ clickhouse_backup_config_file | to_nice_yaml }}'
+    dest: /etc/clickhouse-backup/config.yml
+    mode: 0644
+  notify: Restart clickhouse-backup
+
+- name: Create clickhouse-backup.service
+  become: true
+  ansible.builtin.copy:
+    src: clickhouse-backup.service
+    dest: /lib/systemd/system/clickhouse-backup.service
+    mode: 0644
+  notify: Restart clickhouse-backup
+
+- name: Start and enable clickhouse-backup
+  become: true
+  ansible.builtin.systemd:
+    name: clickhouse-backup.service
+    state: started
+    enabled: true
+    daemon-reload: true

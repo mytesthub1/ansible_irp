@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    Add clickhouse table restore from the latrst backup in
+    integration-testing-db molecule scenario
