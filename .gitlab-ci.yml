@@ -1,0 +1,113 @@
+---
+stages:
+  - build-docker
+  - lint
+  - tests
+
+lint_ansible:
+  image: "${CI_REGISTRY_HOST}/irp/ansible-irp:${CI_COMMIT_REF_NAME}"
+  stage: lint
+  tags:
+    - irp
+  script:
+    - ansible-lint --profile=production --force-color site.yaml
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'  # remove detached pipelines
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - allow_failure: true
+
+build-docker-image:
+  image:
+    name: gcr.io/kaniko-project/executor:v1.20.0-debug
+    entrypoint: [""]
+  stage: build-docker
+  tags:
+    - irp
+  before_script:
+    - |
+      echo "
+      {
+          \"auths\": {
+              \"${CI_REGISTRY_HOST}\": {
+                  \"username\": \"${CI_REGISTRY_USER}\",
+                  \"password\": \"${CI_REGISTRY_PASSWORD}\"
+              }
+          }
+      }" > /kaniko/.docker/config.json
+  script:
+    - |
+      /kaniko/executor \
+        --verbosity info \
+        --log-format color \
+        --reproducible \
+        --context $CI_PROJECT_DIR \
+        --build-arg=CI_JOB_TOKEN \
+        --destination ${CI_REGISTRY_HOST}/irp/ansible-irp:${CI_COMMIT_SHORT_SHA} \
+        --destination ${CI_REGISTRY_HOST}/irp/ansible-irp:${CI_COMMIT_REF_NAME} \
+        --destination ${CI_REGISTRY_HOST}/irp/ansible-irp:latest
+    - echo -e "ℹ️ \e[1;35m${CI_REGISTRY_HOST}/irp/ansible-irp:${CI_COMMIT_SHORT_SHA}\e[0m"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'  # remove detached pipelines
+      when: never
+    - changes:
+        - Dockerfile
+        - pyproject.toml
+        - poetry.lock
+        - .python-version
+        - requirements.yaml
+        - docker_prepare.sh
+    - when: manual
+      allow_failure: true
+
+integration_tests_k8s:
+  image: "${CI_REGISTRY_HOST}/irp/ansible-irp:${CI_COMMIT_REF_NAME}"
+  stage: tests
+  tags:
+    - irp
+  variables:
+    ANSIBLE_FORCE_COLOR: 'true'
+    JOB_ID: ${CI_JOB_ID}
+    PY_COLORS: 'true'
+    USER: ci
+  before_script:
+    - chmod 0700 .
+    - eval $(ssh-agent -s)
+    - echo "${SSH_PRIVATE_KEY}" | tr -d '\r' | ssh-add -
+    - source ${openstack_rc_lux}
+    - env|grep OS_|grep -v PASS
+    - kubectl config use-context irp-staging
+  script:
+    - molecule test -s k8s
+
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - allow_failure: false
+
+db_backup_tests:
+  image: "${CI_REGISTRY_HOST}/irp/ansible-irp:${CI_COMMIT_REF_NAME}"
+  stage: tests
+  tags:
+    - irp
+  variables:
+    ANSIBLE_FORCE_COLOR: 'true'
+    JOB_ID: ${CI_JOB_ID}
+    PY_COLORS: 'true'
+    USER: ci
+  before_script:
+    - chmod 0700 .
+    - source ${openstack_rc_lux}
+    - env|grep OS_|grep -v PASS
+    - kubectl config use-context irp-staging
+  script:
+    - molecule test -s backup-recovery-k8s
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - when: manual
+      allow_failure: true
+    - if: $CI_PIPELINE_SOURCE == "schedule"

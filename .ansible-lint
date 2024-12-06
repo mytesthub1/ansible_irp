@@ -1,0 +1,12 @@
+---
+use_default_rules: true
+
+skip_list:
+  - name[play]  # Rule for checking task and play names.
+  - var-naming[no-role-prefix]
+  - run-once[task]
+  - run-once[play]
+
+exclude_paths:
+  - vendor/
+  - collections/

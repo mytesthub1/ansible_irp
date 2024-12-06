@@ -1,0 +1,14 @@
+*.swp
+*.retry
+*.pyc
+.facts
+.vscode
+.venv
+inventory-agents-*.yaml
+.vscode
+rnd/user_scripts/*
+logs
+.vault_pass
+.pytest_cache
+fqcn.sh
+k8s-users-certs

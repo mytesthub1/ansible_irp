@@ -1,0 +1,12 @@
+---
+extends: default
+
+rules:
+  line-length: disable
+
+ignore: |
+  inventory-agents-*.yaml
+  .venv
+  vendor
+  roles/k8s_cnpg/files/cnpg-prometheusrule.yaml
+  roles/k8s_cnpg/files/grafana-configmap.yaml
